@@ -176,10 +176,10 @@ class OTATable(object):
     def show(self):
         print("new_S:"+str(len(self.S)))
         for s in self.S:
-            print(s.tws, s.row())
+            print(s.tws, s.row(), s.suffixes_resets)
         print("new_R:"+str(len(self.R)))
         for r in self.R:
-            print(r.tws, r.row())
+            print(r.tws, r.row(), r.suffixes_resets)
         print("new_E:"+str(len(self.E)))
         for e in self.E:
             print(e)
