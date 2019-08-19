@@ -36,7 +36,7 @@ class Element(object):
         return state_name
 
     def show(self):
-        return [tw.show() for tw in self.tws], self.value
+        return [tw.show() for tw in self.tws], self.value, self.suffixes_resets
 
 class OTATable(object):
     """The definition of OTA observation table.
@@ -102,11 +102,11 @@ class OTATable(object):
                     for element in table_element:
                         #print "element", [tw.show() for tw in element.tws]
                         if is_prefix(element.tws, table_element[i].tws):
-                            new_element1 = Element(delete_prefix(element.tws, table_element[i].tws), [v for v in element.value]) #-----------todo---------
+                            new_element1 = Element(delete_prefix(element.tws, table_element[i].tws), [v for v in element.value], []) #-----------todo---------
                             temp_elements1.append(new_element1)
                         if is_prefix(element.tws, table_element[j].tws):
                             #print "e2", [tw.show() for tw in element.tws]
-                            new_element2 = Element(delete_prefix(element.tws, table_element[j].tws), [v for v in element.value]) #-----------todo---------
+                            new_element2 = Element(delete_prefix(element.tws, table_element[j].tws), [v for v in element.value], []) #-----------todo---------
                             temp_elements2.append(new_element2)
                     for e1 in temp_elements1:
                         for e2 in temp_elements2:
@@ -217,3 +217,42 @@ def delete_prefix(tws, pref):
     else:
         new_tws = tws[len(pref):]
         return new_tws
+
+def init_table_normal(sigma, ota):
+    """Initial tables.
+    """
+    S = [Element([],[])]
+    R = []
+    E = []
+    for s in S:
+        if ota.initstate_name in ota.accept_names:
+            s.value.append(1)
+        else:
+            s.value.append(0)
+    tables = [OTATable(S, R, E)]
+    for i in range(0, len(sigma)):
+        temp_tables = []
+        for table in tables:
+            new_tw = Timedword(sigma[i], 0)
+            for tran in ota.trans:
+                if tran.source == ota.initstate_name and tran.is_pass(new_tw):
+                    new_rtw_n = ResetTimedword(new_tw.action, new_tw.time, False)
+                    new_rtw_r = ResetTimedword(new_tw.action, new_tw.time, True)
+                    new_value = []
+                    if tran.target in ota.accept_names:
+                        new_value = [1]
+                    elif tran.target == ota.sink_name:
+                        new_value = [-1]
+                    else:
+                        new_value = [0]
+                    new_element_n = Element([new_rtw_n], new_value)
+                    new_element_r = Element([new_rtw_r], new_value)
+                    temp_R_n = table.R + [new_element_n]
+                    temp_R_r = table.R + [new_element_r]
+                    new_table_n = OTATable(S, temp_R_n, E)
+                    new_table_r = OTATable(S, temp_R_r, E)
+                    temp_tables.append(new_table_n)
+                    temp_tables.append(new_table_r)
+                    break
+        tables = temp_tables
+    return tables
