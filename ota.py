@@ -75,7 +75,7 @@ class OTATran(object):
         self.target = target
         self.flag = flag
     def is_pass(self, tw):
-        """Determine whether the timeword tw can pass the transition.
+        """Determine whether local(logical) timeword tw can pass the transition.
         """
         # - means empty
         #if tw.action == "-":
@@ -460,16 +460,16 @@ def buildAssistantOTA(ota, otaflag):
     assist_ota.sink_name = new_location.name
     return assist_ota
 
-def main():
-    print("------------------A-----------------")
-    paras = sys.argv
-    A,_ = buildOTA(paras[1], 's')
-    A.show()
-    print("------------------Assist-----------------")
-    AA = buildAssistantOTA(A, 's')
-    AA.show()
-    print("--------------max value---------------------")
-    print(AA.max_time_value())
+# def main():
+#     print("------------------A-----------------")
+#     paras = sys.argv
+#     A,_ = buildOTA(paras[1], 's')
+#     A.show()
+#     print("------------------Assist-----------------")
+#     AA = buildAssistantOTA(A, 's')
+#     AA.show()
+#     print("--------------max value---------------------")
+#     print(AA.max_time_value())
 
-if __name__=='__main__':
-	main()
+# if __name__=='__main__':
+# 	main()
