@@ -61,12 +61,12 @@ class OTATable(object):
                For each r \in R there exists s \in S such that row(s) = row(r).
             2. return four values, the first one is a flag to show closed or not, 
                the second one is the new S and the third one is the new R,
-               the last one is the list of elements moved from R to S.
+               the last one is the element moved from R to S.
         """
         new_S = [s for s in self.S]
         new_R = [r for r in self.R]
         new_S_rows = [s.row() for s in new_S]
-        move = []
+        move = None
         for r in self.R:
             flag = False
             for s in self.S:
@@ -77,8 +77,9 @@ class OTATable(object):
                 if r.row() not in new_S_rows:
                     new_S.append(r)
                     new_R.remove(r)
-                    move.append(r)
-                    new_S_rows = [s.row() for s in new_S]
+                    move = copy.deepcopy(r)
+                    break
+                    #new_S_rows = [s.row() for s in new_S]
         if len(new_S) > len(self.S):
             return False, new_S, new_R, move
         else:
