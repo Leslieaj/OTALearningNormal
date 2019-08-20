@@ -58,7 +58,7 @@ class OTATable(object):
     
     def is_closed(self):
         """ 1. determine whether the table is closed.
-               For each r \in R there exists s \in S such that row(s) = row(r).
+               For each r in R there exists s in S such that row(s) = row(r).
             2. return four values, the first one is a flag to show closed or not, 
                the second one is the new S and the third one is the new R,
                the last one is the element moved from R to S.
@@ -257,3 +257,32 @@ def init_table_normal(sigma, ota):
                     break
         tables = temp_tables
     return tables
+
+def guess_resets_in_suffixes(table):
+    """Given a table T, before membership querying, we need to guess the reset in the suffixes.
+    This method is for one element in S or R. 
+    """
+    temp_suffixes_resets = []
+    length = 0
+    for e in table.E:
+        length = length + len(e)
+    temp_resets = [[]]
+    for i in range(0,length):
+        temp = []
+        for resets_situation in temp_resets:
+            temp_R = resets_situation + [True]
+            temp_N = resets_situation + [False]
+            temp.append(temp_R)
+            temp.append(temp_N)
+        temp_resets = temp
+    for resets_situation in temp_resets:
+        index = 0
+        suffixes_resets = []
+        for e in table.E:
+            e_resets = []
+            for i in range(index, index+len(e)):
+                e_resets.append(resets_situation[i])
+            suffixes_resets.append(e_resets)
+            index = index + len(e)
+        temp_suffixes_resets.append(suffixes_resets)
+    return temp_suffixes_resets
