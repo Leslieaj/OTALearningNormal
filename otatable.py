@@ -286,3 +286,29 @@ def guess_resets_in_suffixes(table):
             index = index + len(e)
         temp_suffixes_resets.append(suffixes_resets)
     return temp_suffixes_resets
+
+def guess_resets_in_newsuffix(table):
+    """When making consistent, guess the resets in the new suffix.
+    """
+    temp_suffixes_resets = []
+    new_e_length = len(table.E[len(table.E)-1])
+    S_U_R_length = len(table.S) + len(table.R)
+    length = S_U_R_length*new_e_length
+    temp_resets = [[]]
+    for i in range(0,length):
+        temp = []
+        for resets_situation in temp_resets:
+            temp_R = resets_situation + [True]
+            temp_N = resets_situation + [False]
+            temp.append(temp_R)
+            temp.append(temp_N)
+        temp_resets = temp
+    for resets_situation in temp_resets:
+        index = 0
+        suffixes_resets = []
+        for i in range(0, S_U_R_length):
+            e_resets = resets_situation[index : index+new_e_length]
+            suffixes_resets.append(e_resets)
+            index = index + new_e_length
+        temp_suffixes_resets.append(suffixes_resets)
+    return temp_suffixes_resets

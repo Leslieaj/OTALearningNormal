@@ -4,7 +4,7 @@ import unittest
 import sys
 sys.path.append('../')
 from ota import buildAssistantOTA, buildOTA, ResetTimedword, Timedword
-from otatable import init_table_normal, Element, guess_resets_in_suffixes
+from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix
 
 class EquivalenceTest(unittest.TestCase):
     def test_init_table_normal(self):
@@ -53,8 +53,30 @@ class EquivalenceTest(unittest.TestCase):
         suffixes_resets = guess_resets_in_suffixes(T1_table_0)
         self.assertEqual(len(suffixes_resets), 64)
         self.assertEqual(len(suffixes_resets[22]), 3)
-        for resets_situtation in suffixes_resets:
-            print(resets_situtation)
+        # for resets_situtation in suffixes_resets:
+        #     print(resets_situtation)
+
+    def test_guess_resets_in_newsuffix(self):
+        A, _ = buildOTA('example6.json', 's')
+        AA = buildAssistantOTA(A, 's')  # Assist
+        #max_time_value = AA.max_time_value()
+        sigma = AA.sigma
+
+        T1_tables = init_table_normal(sigma, AA)
+        T1_table_0 = T1_tables[0]
+        test_E = [[Timedword('a',2),Timedword('b',3),Timedword('a',1)],[Timedword('b',2),Timedword('a',4)]]
+        T1_table_0.E = test_E
+        suffixes_resets = guess_resets_in_newsuffix(T1_table_0)
+        self.assertEqual(len(suffixes_resets),256)
+        self.assertEqual(len(suffixes_resets[34]), 4)
+        self.assertEqual(suffixes_resets[1],[[True,True],[True,True],[True,True],[True,False]])
+
+        test_E = [[Timedword('a',2),Timedword('b',3),Timedword('a',1)]]
+        T1_table_0.E = test_E
+        suffixes_resets = guess_resets_in_newsuffix(T1_table_0)
+        self.assertEqual(len(suffixes_resets),4096)
+        self.assertEqual(len(suffixes_resets[34]), 4)
+        self.assertEqual(suffixes_resets[1],[[True,True,True],[True,True,True],[True,True,True],[True,True,False]])
 
 if __name__ == "__main__":
     unittest.main()
