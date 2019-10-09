@@ -185,6 +185,62 @@ class OTATable(object):
         for e in self.E:
             print(e)
 
+def make_closed(new_S, new_R, move, table, sigma, ota):
+    """Make table closed.
+    """
+    new_E = table.E
+    closed_table = OTATable(new_S, new_R, new_E)
+    table_tws = [s.tws for s in closed_table.S] + [r.tws for r in closed_table.R]
+    temp_resets = [[]]
+    for i in range(0,len(sigma)):
+        new_rtw_n = ResetTimedword(sigma[i], 0, False)
+        new_rtw_r = ResetTimedword(sigma[i], 0, True)
+        new_situations = []
+        for situation in temp_resets:
+            temp = copy.deepcopy(situation)
+            temp_n = temp + [new_rtw_n]
+            temp_r = temp + [new_rtw_r]
+            new_situations.append(temp_r)
+            new_situations.append(temp_n)
+        temp_resets = new_situations
+    #return temp_resets
+    OTAtables = []
+    for situation in temp_resets:
+        new_rs = []
+        for new_rtw in situation:
+            new_r = [tw for tw in move.tws] + [new_rtw]
+            if new_r not in table_tws:
+                new_rs.append(Element(new_r,[],[]))
+        temp_R = [r for r in new_R] + new_rs
+        temp_table = OTATable(new_S, temp_R, new_E)
+        OTAtables.append(temp_table)
+    #return OTAtables
+    #guess the resets of suffixes for each prefix and fill
+    OTAtables_after_guessing_resets = []
+    for otatable in OTAtables:
+        new_r_start_index = len(new_R)
+        new_r_end_index = len(otatable.R)
+        temp_otatables = [otatable]
+        #print(new_r_start_index, new_r_end_index)
+        for i in range(new_r_start_index, new_r_end_index):
+            resets_situtations = guess_resets_in_suffixes(otatable)
+            new_tables = []
+            for j in range(0, len(resets_situtations)):
+                for temp_table in temp_otatables:
+                    new_table = copy.deepcopy(temp_table)
+                    temp_otatable = OTATable(new_table.S, new_table.R, new_table.E)
+                    temp_otatable.R[i].suffixes_resets = resets_situtations[j]
+                    new_table = copy.deepcopy(temp_otatable)
+                    if True == fill(new_table.R[i],new_table.E,ota):
+                        new_tables.append(new_table)
+            temp_otatables = [tb for tb in new_tables]
+            #print("a", len(temp_otatables))
+        OTAtables_after_guessing_resets = OTAtables_after_guessing_resets + temp_otatables
+        #print("b", len(OTAtables_after_guessing_resets))
+    return OTAtables_after_guessing_resets
+
+
+
 def prefixes(tws):
     """Return the prefixes of a timedwords. [tws1, tws2, tws3, ..., twsn]
     """
@@ -375,25 +431,27 @@ def fill(element, E, ota):
     """
     local_tws = element.tws
     delay_tws = lRTWs_to_DTWs(local_tws)
-    current_location_name = ota.run_delaytimedwords(delay_tws)
+    #current_location_name = ota.run_delaytimedwords(delay_tws)
     if len(element.value) == 0:
+    #if len(E) == 0:
         f = ota.is_accepted_delay(delay_tws)
         element.value.append(f)
-    if current_location_name == ota.sink_name:
-        for i in range(len(element.value)-1, len(E)):
-            element.value.append(-1)
-            return True
-    else:
-        for e, i in zip(E, range(len(element.value)-1, len(E))):
-            lrtws, flag = build_logical_resettimedwords(element, e, i)
-            if flag == True:
-                delay_tws = lRTWs_to_DTWs(lrtws)
-                f = ota.is_accepted_delay(delay_tws)
-                element.value.append(f)
-                return True
-            else:
-                return False
-        return True
+        #return True
+    # if current_location_name == ota.sink_name:
+    #     for i in range(len(element.value)-1, len(E)):
+    #         element.value.append(-1)
+    #         return True
+    # else:
+    for i in range(len(element.value)-1, len(E)):
+        lrtws, flag = build_logical_resettimedwords(element, E[i], i)
+        if flag == True:
+            delay_tws = lRTWs_to_DTWs(lrtws)
+            f = ota.is_accepted_delay(delay_tws)
+            element.value.append(f)
+                #return True
+        else:
+            return False
+    return True
 
 def add_ctx_normal(dtws, table, ota):
     """Given a counterexample ctx, guess the reset, check the reset, for each suitable one, add it and its prefixes to R (except those already present in S and R)
@@ -407,7 +465,7 @@ def add_ctx_normal(dtws, table, ota):
         local_tws = dRTWs_to_lRTWs(ctx)
         normalize(local_tws)
         if check_guessed_reset(local_tws, table) == True:
-            print(local_tws)
+            #print(local_tws)
             pref = prefixes(local_tws)
             S_tws = [s.tws for s in table.S]
             S_R_tws = [s.tws for s in table.S] + [r.tws for r in table.R]
@@ -429,7 +487,7 @@ def add_ctx_normal(dtws, table, ota):
             new_OTAtable = OTATable(new_S, new_R, new_E)
             OTAtables.append(new_OTAtable)
     #return OTAtables
-    #guess the resets of suffixes for each prefix
+    #guess the resets of suffixes for each prefix and fill
     OTAtables_after_guessing_resets = []
     for otatable in OTAtables:
         new_r_start_index = len(table.R)

@@ -4,7 +4,7 @@ import unittest
 import sys,os
 sys.path.append('../')
 from ota import buildAssistantOTA, buildOTA, ResetTimedword, Timedword, dRTWs_to_lRTWs
-from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes, add_ctx_normal
+from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes, add_ctx_normal, make_closed
 from equivalence import equivalence_query_normal, guess_ctx_reset
 
 class EquivalenceTest(unittest.TestCase):
@@ -41,6 +41,24 @@ class EquivalenceTest(unittest.TestCase):
         self.assertEqual(new_R, [Element([ResetTimedword('b',0,False)],[-1],[]), Element([ResetTimedword('c',0,True)],[-1],[])])
         self.assertEqual(move, Element([ResetTimedword('a',0,True)],[-1],[]))
 
+    def test_make_closed(self):
+        A, _ = buildOTA('f.json', 's')
+        AA = buildAssistantOTA(A, 's')  # Assist
+        #max_time_value = AA.max_time_value()
+        sigma = AA.sigma
+
+        T1_tables = init_table_normal(sigma, AA)
+        self.assertEqual(len(T1_tables), 8)
+        #print("--------------------------------------------------")
+        flag_closed, new_S, new_R, move = T1_tables[0].is_closed()
+        self.assertEqual(flag_closed, False)
+        tables = make_closed(new_S, new_R, move, T1_tables[0], sigma, AA)
+        print("--------------make closed---------------------")
+        print(len(tables))
+        for table in tables:
+            table.show()
+            print("--------------------------")
+    
     def test_guess_resets_in_suffixes(self):
         A, _ = buildOTA('example6.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
@@ -95,32 +113,32 @@ class EquivalenceTest(unittest.TestCase):
         # print("------------------------------")
         # H.show()
         flag, ctx = equivalence_query_normal(max_time_value,AA,HH)
-        print("-------------ctx-----------------")
-        print(ctx.tws)
+        # print("-------------ctx-----------------")
+        # print(ctx.tws)
         ctxs = guess_ctx_reset(ctx.tws)
-        print(len(ctxs))
-        for rtws in ctxs:
-            print(rtws)
-        print("-------------local tws-----------------")
+        # print(len(ctxs))
+        # for rtws in ctxs:
+        #     print(rtws)
+        # print("-------------local tws-----------------")
         for ctx in ctxs:
             local_tws = dRTWs_to_lRTWs(ctx)
             normalize(local_tws)
-            #if check_guessed_reset(local_tws, table) == True:
-            print(ctx)
-            print(local_tws)
-            pref = prefixes(local_tws)
-            for tws in pref:
-                print(tws)
-            print("-------------------")
+        #     #if check_guessed_reset(local_tws, table) == True:
+        #     print(ctx)
+        #     print(local_tws)
+        #     pref = prefixes(local_tws)
+        #     for tws in pref:
+        #         print(tws)
+        #     print("-------------------")
         
-        # T1_tables = init_table_normal(sigma, AA)
-        # T1_table_0 = T1_tables[0]
-        # test_E = [[Timedword('b',2),Timedword('a',4)],[Timedword('a',5)]]
-        # T1_table_0.E = test_E
+        T1_tables = init_table_normal(sigma, AA)
+        T1_table_0 = T1_tables[0]
+        test_E = [[Timedword('b',2),Timedword('a',4)],[Timedword('a',5)]]
+        T1_table_0.E = test_E
         # T1_table_0.show()
         # print("----------------------------------------")
         # tables = add_ctx_normal(ctx, T1_table_0, AA)
-        # self.assertEqual(len(tables),65536)
+        #self.assertEqual(len(tables),65536)
         # tables[0].show()
         # tables[1].show()
         # tables[2].show()
@@ -134,15 +152,15 @@ class EquivalenceTest(unittest.TestCase):
         T1_table_0 = T1_tables[0]
         test_E = [[Timedword('b',2),Timedword('a',4)]]
         T1_table_0.E = test_E
-        T1_table_0.show()
-        print("----------------------------------------")
-        tables = add_ctx_normal(ctx, T1_table_0, AA)
+        # T1_table_0.show()
+        # print("----------------------------------------")
+        # tables = add_ctx_normal(ctx, T1_table_0, AA)
         #self.assertEqual(len(tables),4096)
-        print(len(tables))
-        tables[0].show()
-        tables[1].show()
-        tables[2].show()
-        tables[100].show()
+        # print(len(tables))
+        # tables[0].show()
+        # tables[1].show()
+        # tables[2].show()
+        # tables[100].show()
         #tables[4095].show()
 
 if __name__ == "__main__":
