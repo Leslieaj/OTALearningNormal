@@ -1,7 +1,7 @@
 # The definitions on the OTA observation table.
 
 import copy
-from ota import Timedword, ResetTimedword, dRTWs_to_lRTWs
+from ota import Timedword, ResetTimedword, is_valid_rtws, dRTWs_to_lRTWs, lRTWs_to_DTWs
 
 class Element(object):
     """The definition of the element in OTA observation table.
@@ -361,6 +361,40 @@ def normalize(tws):
             else:
                 rtw.time = float(integer + '.1')
 
+def build_logical_resettimedwords(element, e, e_index):
+    """build a logical reset timedwords based on an element in S,R and a suffix e in E.
+    """
+    lrtws = [tw for tw in element.tws]
+    temp_suffixes_timedwords = [ResetTimedword(tw.action,tw.time, element.suffixes_resets[e_index][j]) for tw, j in zip(e, range(len(e)))]
+    lrtws = lrtws + temp_suffixes_timedwords
+    flag = is_valid_rtws(lrtws)
+    return lrtws, flag
+
+def fill(element, E, ota):
+    """Fill an element in S U R.
+    """
+    local_tws = element.tws
+    delay_tws = lRTWs_to_DTWs(local_tws)
+    current_location_name = ota.run_delaytimedwords(delay_tws)
+    if len(element.value) == 0:
+        f = ota.is_accepted_delay(delay_tws)
+        element.value.append(f)
+    if current_location_name == ota.sink_name:
+        for i in range(len(element.value)-1, len(E)):
+            element.value.append(-1)
+            return True
+    else:
+        for e, i in zip(E, range(len(element.value)-1, len(E))):
+            lrtws, flag = build_logical_resettimedwords(element, e, i)
+            if flag == True:
+                delay_tws = lRTWs_to_DTWs(lrtws)
+                f = ota.is_accepted_delay(delay_tws)
+                element.value.append(f)
+                return True
+            else:
+                return False
+        return True
+
 def add_ctx_normal(dtws, table, ota):
     """Given a counterexample ctx, guess the reset, check the reset, for each suitable one, add it and its prefixes to R (except those already present in S and R)
     """
@@ -411,7 +445,9 @@ def add_ctx_normal(dtws, table, ota):
                     new_table = copy.deepcopy(temp_table)
                     temp_otatable = OTATable(new_table.S, new_table.R, new_table.E)
                     temp_otatable.R[i].suffixes_resets = resets_situtations[j]
-                    new_tables.append(temp_otatable)
+                    new_table = copy.deepcopy(temp_otatable)
+                    if True == fill(new_table.R[i],new_table.E,ota):
+                        new_tables.append(new_table)
             temp_otatables = [tb for tb in new_tables]
             #print("a", len(temp_otatables))
         OTAtables_after_guessing_resets = OTAtables_after_guessing_resets + temp_otatables

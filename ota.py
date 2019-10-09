@@ -354,6 +354,23 @@ def dRTWs_to_lRTWs(delay_resettimedwords):
         reset = drtw.reset
     return local_resettimedwords
 
+def lRTWs_to_DTWs(logical_resettimedwords):
+    """Given a logical(local) reset-timedwords, renturn a delay timed words.
+    """
+    reset = True
+    delay_time = 0
+    current_clock_valuation = 0
+    delay_timedwords = []
+    for lrtw in logical_resettimedwords:
+        if reset == True:
+            delay_time = lrtw.time
+        else:
+            delay_time = lrtw.time - current_clock_valuation
+        delay_timedwords.append(Timedword(lrtw.action, delay_time))
+        reset = lrtw.reset
+        current_clock_valuation = lrtw.time
+    return delay_timedwords
+
 def is_valid_rtws(rtws):
     """Given a clock-valuation timedwords with reset-info, determin its validation.
     """

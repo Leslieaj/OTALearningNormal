@@ -110,7 +110,17 @@ class EquivalenceTest(unittest.TestCase):
         self.assertEqual(AA.is_accepted_delay(tws4),-1)
         self.assertEqual(AA.run_delaytimedwords(tws5),'2')
         self.assertEqual(AA.is_accepted_delay(tws5),0)
-        
+    
+    def test_lRTWs_to_DTWs(self):
+        ctx1 = [Timedword('a',1),Timedword('b',3),Timedword('a',1),Timedword('b',0)]
+        lrtws1 = [ResetTimedword('a',1,False),ResetTimedword('b',4,False),ResetTimedword('a',5,False),ResetTimedword('b',5,False)]
+        lrtws2 = [ResetTimedword('a',1,True),ResetTimedword('b',3,False),ResetTimedword('a',4,False), ResetTimedword('b',4,False)]
+        lrtws3 = [ResetTimedword('a',1,True),ResetTimedword('b',3,True),ResetTimedword('a',1,False), ResetTimedword('b',1,False)]
+        lrtws4 = [ResetTimedword('a',1,True),ResetTimedword('b',3,True),ResetTimedword('a',1,True), ResetTimedword('b',0,True)]
+        self.assertEqual(lRTWs_to_DTWs(lrtws1),ctx1)
+        self.assertEqual(lRTWs_to_DTWs(lrtws2),ctx1)
+        self.assertEqual(lRTWs_to_DTWs(lrtws3),ctx1)
+        self.assertEqual(lRTWs_to_DTWs(lrtws4),ctx1)
 
 if __name__ == "__main__":
     unittest.main()
