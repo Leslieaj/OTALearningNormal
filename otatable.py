@@ -1,7 +1,7 @@
 # The definitions on the OTA observation table.
 
 import copy
-from ota import Timedword, ResetTimedword
+from ota import Timedword, ResetTimedword, dRTWs_to_lRTWs
 
 class Element(object):
     """The definition of the element in OTA observation table.
@@ -312,3 +312,86 @@ def guess_resets_in_newsuffix(table):
             index = index + new_e_length
         temp_suffixes_resets.append(suffixes_resets)
     return temp_suffixes_resets
+
+def guess_ctx_reset(dtws):
+    """When receiving a counterexample (delay timed word), guess all resets and return all reset delay timed words as ctx candidates.  
+    """
+    #ctxs = []
+    new_tws = [Timedword(tw.action,tw.time) for tw in dtws]
+    ctxs = [[ResetTimedword(new_tws[0].action, new_tws[0].time, False)], [ResetTimedword(new_tws[0].action, new_tws[0].time, True)]]
+    for i in range(1, len(new_tws)):
+        templist = []
+        for rtws in ctxs:
+            temp_n = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, False)] 
+            temp_r = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, True)]
+            templist.append(temp_n)
+            templist.append(temp_r)
+        #ctxs = copy.deepcopy(templist)
+        ctxs = templist
+    return ctxs
+
+def check_guessed_reset(lrtws, table):
+    """Given a guessed normalized reset-logical(local)-timed-word, check the reset whether it is suitable to current table.
+       If the action and the clock valuation are same to the Element in S U R, however, the resets are diferent, then return False to identicate
+       the wrong guess.
+    """
+    S_U_R = [s for s in table.S] + [r for r in table.R]
+    for element in S_U_R:
+        for rtw, i in zip(lrtws, range(0, len(lrtws))):
+            if i < len(element.tws):
+                if rtw.action == element.tws[i].action and rtw.time == element.tws[i].time:
+                    if rtw.reset != element.tws[i].reset:
+                        return False
+                else:
+                    break
+            else:
+                break
+    return True
+
+def normalize(tws):
+    """Normalize the ctx.
+    """
+    for rtw in tws:
+        if isinstance(rtw.time, int) == True:
+            pass
+        else:
+            integer, frac = str(rtw.time).split('.')
+            if frac == '0':
+                rtw.time = int(integer)
+            else:
+                rtw.time = float(integer + '.1')
+
+# def add_ctx_normal(dtws, table, ota):
+#     """Given a counterexample ctx, guess the reset, check the reset, for each suitable one, add it and its prefixes to R (except those already present in S and R)
+#     """
+#     #print(ctx)
+#     #print(fix_resets(ctx,ota))
+#     #local_tws = dRTWs_to_lRTWs(fix_resets(ctx,ota))
+#     OTAtables = []
+#     ctxs = guess_ctx_reset(dtws)
+#     for ctx in ctxs:
+#         local_tws = dRTWs_to_lRTWs(ctx)
+#         normalize(local_tws)
+#         if check_guessed_reset(local_tws, table) == True:
+#             print(local_tws)
+#             pref = prefixes(local_tws)
+#             S_tws = [s.tws for s in table.S]
+#             S_R_tws = [s.tws for s in table.S] + [r.tws for r in table.R]
+#             new_S = [s for s in table.S]
+#             new_R = [r for r in table.R]
+#             new_E = [e for e in table.E]
+#             for tws in pref:
+#                 need_add = True
+#                 for stws in S_R_tws:
+#                 #for stws in S_tws:
+#                     #if tws_equal(tws, stws):
+#                     if tws == stws:
+#                         need_add = False
+#                         break
+#                 if need_add == True:
+#                     temp_element = Element(tws,[])
+#                     fill(temp_element, new_E, ota)
+#                     new_R.append(temp_element)
+#             new_OTAtable = OTATable(new_S, new_R, new_E)
+#             OTAtables.append(new_OTAtable)
+#     return OTAtables
