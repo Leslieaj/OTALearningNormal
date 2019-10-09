@@ -394,4 +394,27 @@ def add_ctx_normal(dtws, table, ota):
                     new_R.append(temp_element)
             new_OTAtable = OTATable(new_S, new_R, new_E)
             OTAtables.append(new_OTAtable)
-    return OTAtables
+    #return OTAtables
+    #guess the resets of suffixes for each prefix
+    OTAtables_after_guessing_resets = []
+    for otatable in [OTAtables[0]]:
+        new_r_start_index = len(table.R)
+        new_r_end_index = len(otatable.R)
+        temp_otatables = [otatable]
+        #print(new_r_start_index, new_r_end_index)
+        for i in range(new_r_start_index, new_r_end_index):
+            resets_situtations = guess_resets_in_suffixes(otatable)
+            #print(len(resets_situtations))
+            new_tables = []
+            for j in range(0, len(resets_situtations)):
+                for temp_table in temp_otatables:
+                    new_table = copy.deepcopy(temp_table)
+                    temp_otatable = OTATable(new_table.S, new_table.R, new_table.E)
+                    temp_otatable.R[i].suffixes_resets = resets_situtations[j]
+                    new_tables.append(temp_otatable)
+            temp_otatables = [tb for tb in new_tables]
+            #print("a", len(temp_otatables))
+        OTAtables_after_guessing_resets = OTAtables_after_guessing_resets + temp_otatables
+        #print("b", len(OTAtables_after_guessing_resets))
+    return OTAtables_after_guessing_resets
+

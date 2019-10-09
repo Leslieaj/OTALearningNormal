@@ -4,7 +4,7 @@ import unittest
 import sys,os
 sys.path.append('../')
 from ota import buildAssistantOTA, buildOTA, ResetTimedword, Timedword, dRTWs_to_lRTWs
-from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes
+from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes, add_ctx_normal
 from equivalence import equivalence_query_normal, guess_ctx_reset
 
 class EquivalenceTest(unittest.TestCase):
@@ -83,6 +83,7 @@ class EquivalenceTest(unittest.TestCase):
         experiments_path = os.path.dirname(os.getcwd())+"/experiments/"
         A, _ = buildOTA(experiments_path+'example3.json', 's')
         AA = buildAssistantOTA(A, 's')
+        sigma = AA.sigma
         max_time_value = AA.max_time_value()
 
         H, _ = buildOTA(experiments_path+'example3_1.json', 'q')
@@ -111,7 +112,23 @@ class EquivalenceTest(unittest.TestCase):
             for tws in pref:
                 print(tws)
             print("-------------------")
-
         
+        T1_tables = init_table_normal(sigma, AA)
+        T1_table_0 = T1_tables[0]
+        test_E = [[Timedword('b',2),Timedword('a',4)],[Timedword('a',5)]]
+        T1_table_0.E = test_E
+        T1_table_0.show()
+        print("----------------------------------------")
+        tables = add_ctx_normal(ctx, T1_table_0, AA)
+        self.assertEqual(len(tables),4096)
+        # tables[0].show()
+        # tables[1].show()
+        # tables[2].show()
+        # tables[100].show()
+        # tables[4095].show()
+        # for table in tables:
+        #     table.show()
+        #     print("---------------------")
+
 if __name__ == "__main__":
     unittest.main()
