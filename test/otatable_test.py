@@ -113,14 +113,14 @@ class EquivalenceTest(unittest.TestCase):
                 print(tws)
             print("-------------------")
         
-        T1_tables = init_table_normal(sigma, AA)
-        T1_table_0 = T1_tables[0]
-        test_E = [[Timedword('b',2),Timedword('a',4)],[Timedword('a',5)]]
-        T1_table_0.E = test_E
-        T1_table_0.show()
-        print("----------------------------------------")
-        tables = add_ctx_normal(ctx, T1_table_0, AA)
-        self.assertEqual(len(tables),4096)
+        # T1_tables = init_table_normal(sigma, AA)
+        # T1_table_0 = T1_tables[0]
+        # test_E = [[Timedword('b',2),Timedword('a',4)],[Timedword('a',5)]]
+        # T1_table_0.E = test_E
+        # T1_table_0.show()
+        # print("----------------------------------------")
+        # tables = add_ctx_normal(ctx, T1_table_0, AA)
+        # self.assertEqual(len(tables),65536)
         # tables[0].show()
         # tables[1].show()
         # tables[2].show()
@@ -129,6 +129,20 @@ class EquivalenceTest(unittest.TestCase):
         # for table in tables:
         #     table.show()
         #     print("---------------------")
+
+        T1_tables = init_table_normal(sigma, AA)
+        T1_table_0 = T1_tables[0]
+        test_E = [[Timedword('b',2),Timedword('a',4)]]
+        T1_table_0.E = test_E
+        T1_table_0.show()
+        print("----------------------------------------")
+        tables = add_ctx_normal(ctx, T1_table_0, AA)
+        self.assertEqual(len(tables),4096)
+        tables[0].show()
+        tables[1].show()
+        tables[2].show()
+        tables[100].show()
+        tables[4095].show()
 
 if __name__ == "__main__":
     unittest.main()

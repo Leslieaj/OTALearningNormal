@@ -397,7 +397,7 @@ def add_ctx_normal(dtws, table, ota):
     #return OTAtables
     #guess the resets of suffixes for each prefix
     OTAtables_after_guessing_resets = []
-    for otatable in [OTAtables[0]]:
+    for otatable in OTAtables:
         new_r_start_index = len(table.R)
         new_r_end_index = len(otatable.R)
         temp_otatables = [otatable]
