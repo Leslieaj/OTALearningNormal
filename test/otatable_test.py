@@ -1,10 +1,11 @@
 #Unit tests for otatable.py
 
 import unittest
-import sys
+import sys,os
 sys.path.append('../')
-from ota import buildAssistantOTA, buildOTA, ResetTimedword, Timedword
-from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix
+from ota import buildAssistantOTA, buildOTA, ResetTimedword, Timedword, dRTWs_to_lRTWs
+from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes
+from equivalence import equivalence_query_normal, guess_ctx_reset
 
 class EquivalenceTest(unittest.TestCase):
     def test_init_table_normal(self):
@@ -78,5 +79,38 @@ class EquivalenceTest(unittest.TestCase):
         self.assertEqual(len(suffixes_resets[34]), 4)
         self.assertEqual(suffixes_resets[1],[[True,True,True],[True,True,True],[True,True,True],[True,True,False]])
 
+    def test_add_ctx_normal(self):
+        experiments_path = os.path.dirname(os.getcwd())+"/experiments/"
+        A, _ = buildOTA(experiments_path+'example3.json', 's')
+        AA = buildAssistantOTA(A, 's')
+        max_time_value = AA.max_time_value()
+
+        H, _ = buildOTA(experiments_path+'example3_1.json', 'q')
+        HH = buildAssistantOTA(H, 'q')
+
+        # AA.show()
+        # print("------------------------------")
+        # HH.show()
+        # print("------------------------------")
+        # H.show()
+        flag, ctx = equivalence_query_normal(max_time_value,AA,HH)
+        print("-------------ctx-----------------")
+        print(ctx.tws)
+        ctxs = guess_ctx_reset(ctx.tws)
+        print(len(ctxs))
+        for rtws in ctxs:
+            print(rtws)
+        print("-------------local tws-----------------")
+        for ctx in ctxs:
+            local_tws = dRTWs_to_lRTWs(ctx)
+            normalize(local_tws)
+            #if check_guessed_reset(local_tws, table) == True:
+            print(local_tws)
+            pref = prefixes(local_tws)
+            for tws in pref:
+                print(tws)
+            print("-------------------")
+
+        
 if __name__ == "__main__":
     unittest.main()
