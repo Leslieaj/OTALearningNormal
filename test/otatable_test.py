@@ -105,6 +105,7 @@ class EquivalenceTest(unittest.TestCase):
             local_tws = dRTWs_to_lRTWs(ctx)
             normalize(local_tws)
             #if check_guessed_reset(local_tws, table) == True:
+            print(ctx)
             print(local_tws)
             pref = prefixes(local_tws)
             for tws in pref:
