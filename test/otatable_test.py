@@ -154,8 +154,8 @@ class EquivalenceTest(unittest.TestCase):
         T1_table_0.E = test_E
         # T1_table_0.show()
         # print("----------------------------------------")
-        # tables = add_ctx_normal(ctx, T1_table_0, AA)
-        #self.assertEqual(len(tables),4096)
+        tables = add_ctx_normal(ctx, T1_table_0, AA)
+        self.assertEqual(len(tables),2048)
         # print(len(tables))
         # tables[0].show()
         # tables[1].show()

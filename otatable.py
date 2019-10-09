@@ -119,11 +119,12 @@ class OTATable(object):
                                 else:
                                     flag = False
                                     new_a = e1.tws
-                                    for i in range(0, len(e1.value)):
-                                        if e1.value[i] != e2.value[i]:
-                                            new_e_index = i
-                                            return flag, new_a, new_e_index
-        return flag, new_a, new_e_index
+                                    for k in range(0, len(e1.value)):
+                                        if e1.value[k] != e2.value[k]:
+                                            new_e_index = k
+                                            reset = e1.tws[0].reset
+                                            return flag, new_a, new_e_index, i, j, reset
+        return flag, new_a, new_e_index, i, j, True
 
     def is_evidence_closed(self, ota):
         """Determine whether the table is evidence-closed.
@@ -239,7 +240,34 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
         #print("b", len(OTAtables_after_guessing_resets))
     return OTAtables_after_guessing_resets
 
-
+def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset, table, sigma, ota):
+    """Make table consistent.
+    """
+    new_E = [tws for tws in table.E]
+    new_e = [Timedword(tw.action,tw.time) for tw in new_a]
+    if new_e_index > 0:
+        e = table.E[new_e_index-1]
+        new_e.extend(e)
+    new_E.append(new_e)
+    new_table = OTATable(table.S,table.R,new_E)
+    temp_suffixes_resets = guess_resets_in_newsuffix(new_table)
+    OTAtables = []
+    for situation in temp_suffixes_resets:
+        temp_situation = []
+        for resets in situation:
+            temp_situation.extend(resets)
+        if temp_situation[fix_reset_i] == temp_situation[fix_reset_j] and temp_situation[fix_reset_i] == reset:
+            new_S = [s for s in table.S]
+            new_R = [r for r in table.R]
+            for i in range(0,len(situation)):
+                #length = len(new_S) + len(new_R)
+                if i < len(table.s):
+                    new_S[i].suffixes_resets.append(situation[i])
+                else:
+                    new_R[i-len(new_S)].suffixes_resets.append(situation[i])
+            temp_table = OTATable(new_S, new_R, new_E)
+            OTAtables.append(temp_table)
+    return OTAtables
 
 def prefixes(tws):
     """Return the prefixes of a timedwords. [tws1, tws2, tws3, ..., twsn]
