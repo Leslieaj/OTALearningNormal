@@ -111,6 +111,10 @@ class EquivalenceTest(unittest.TestCase):
         self.assertEqual(AA.run_delaytimedwords(tws5),(True,'2'))
         self.assertEqual(AA.is_accepted_delay(tws5),0)
     
+    def test_dRTWs_to_lRTWs(self):
+        ctx1 = [ResetTimedword('a',1, False),ResetTimedword('b',3, True),ResetTimedword('a',1,False),ResetTimedword('b',0,False)]
+        self.assertEqual(dRTWs_to_lRTWs(ctx1), [ResetTimedword('a',1,False),ResetTimedword('b',4,True),ResetTimedword('a',1,False),ResetTimedword('b',1,False)])
+
     def test_lRTWs_to_DTWs(self):
         ctx1 = [Timedword('a',1),Timedword('b',3),Timedword('a',1),Timedword('b',0)]
         lrtws1 = [ResetTimedword('a',1,False),ResetTimedword('b',4,False),ResetTimedword('a',5,False),ResetTimedword('b',5,False)]

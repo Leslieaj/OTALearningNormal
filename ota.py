@@ -347,7 +347,7 @@ class ResetTimedword(Timedword):
 def dRTWs_to_lRTWs(delay_resettimedwords):
     """Given a delay reset-timedwords, return the local reset-timedwords.
     """
-    reset = False
+    reset = True
     current_clock_valuation = 0
     local_resettimedwords = []
     for drtw in delay_resettimedwords:
