@@ -98,17 +98,17 @@ class EquivalenceTest(unittest.TestCase):
         tws3 = [Timedword('a',2),Timedword('b',0)]
         tws4 = [Timedword('a',1),Timedword('b',3.5)]
         tws5 = [Timedword('a',1.5),Timedword('b',1.5),Timedword('a',2)]
-        self.assertEqual(AA.run_delaytimedwords(tws0),'1')
+        self.assertEqual(AA.run_delaytimedwords(tws0),(True,'1'))
         self.assertEqual(AA.is_accepted_delay(tws0),0)
-        self.assertEqual(AA.run_delaytimedwords(tws1),'4')
+        self.assertEqual(AA.run_delaytimedwords(tws1),(True,'4'))
         self.assertEqual(AA.is_accepted_delay(tws1),-1)
-        self.assertEqual(AA.run_delaytimedwords(tws2),'4')
+        self.assertEqual(AA.run_delaytimedwords(tws2),(True,'4'))
         self.assertEqual(AA.is_accepted_delay(tws2),-1)
-        self.assertEqual(AA.run_delaytimedwords(tws3),'3')
+        self.assertEqual(AA.run_delaytimedwords(tws3),(True,'3'))
         self.assertEqual(AA.is_accepted_delay(tws3),1)
-        self.assertEqual(AA.run_delaytimedwords(tws4),'4')
+        self.assertEqual(AA.run_delaytimedwords(tws4),(True,'4'))
         self.assertEqual(AA.is_accepted_delay(tws4),-1)
-        self.assertEqual(AA.run_delaytimedwords(tws5),'2')
+        self.assertEqual(AA.run_delaytimedwords(tws5),(True,'2'))
         self.assertEqual(AA.is_accepted_delay(tws5),0)
     
     def test_lRTWs_to_DTWs(self):

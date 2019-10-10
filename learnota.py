@@ -36,6 +36,8 @@ def main():
     T1_tables = init_table_normal(sigma, AA)
     need_to_explore = []
     need_to_explore.extend(T1_tables)
+
+    # Current number of tables
     t_number = 0
     start = time.time()
     equivalent = False
@@ -57,10 +59,10 @@ def main():
                     print("------------------make closed--------------------------")
                     temp_tables = make_closed(new_S, new_R, move, current_table, sigma, AA)
                     if len(temp_tables) > 0:
-                        # index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
-                        # for i in range(0, len(temp_tables)):
-                        #     need_to_explore.insert(index_to_insert+i, temp_tables[i])
-                        need_to_explore.extend(temp_tables)
+                        index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
+                        for i in range(0, len(temp_tables)):
+                            need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        # need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
                     print("Table " + str(t_number) + " is as follow.")
@@ -71,10 +73,10 @@ def main():
                     print("------------------make consistent--------------------------")
                     temp_tables = make_consistent(new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j, current_table, sigma, AA)
                     if len(temp_tables) > 0:
-                        # index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
-                        # for i in range(0, len(temp_tables)):
-                        #     need_to_explore.insert(index_to_insert+i, temp_tables[i])
-                        need_to_explore.extend(temp_tables)
+                        index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
+                        for i in range(0, len(temp_tables)):
+                            need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        # need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
                     print("Table " + str(t_number) + " is as follow.")
@@ -102,10 +104,10 @@ def main():
                 if equivalent == False:
                     temp_tables = add_ctx_normal(ctx.tws,current_table,AA)
                     if len(temp_tables) > 0:
-                        # index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
-                        # for i in range(0, len(temp_tables)):
-                        #     need_to_explore.insert(index_to_insert+i, temp_tables[i])
-                        need_to_explore.extend(temp_tables)
+                        index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
+                        for i in range(0, len(temp_tables)):
+                            need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        #need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
                     print("Table " + str(t_number) + " is as follow.")

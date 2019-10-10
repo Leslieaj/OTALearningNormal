@@ -199,7 +199,7 @@ class OTA(object):
         #print("---tws----")
         #print(tws)
         if length == 0:
-            return self.initstate_name
+            return True, self.initstate_name
         else:
             current_statename = self.initstate_name
             current_clock_valuation = 0
@@ -216,16 +216,19 @@ class OTA(object):
                         reset = tran.reset
                         flag = True
                         if current_statename == self.sink_name:
-                            return self.sink_name
+                            return True, self.sink_name
                         break
                 if flag == False:
-                    raise NotImplementedError("run_delaytimedwords: an unhandle delaytimedword!")
+                    #raise NotImplementedError("run_delaytimedwords: an unhandle delaytimedword!")
+                    return False, ""
                 else:
                     pass
-            return current_statename
+            return True, current_statename
 
     def is_accepted_delay(self, tws):
-        current_statename = self.run_delaytimedwords(tws)
+        flag, current_statename = self.run_delaytimedwords(tws)
+        if flag == False:
+            return -2
         if current_statename == self.sink_name:
             return -1
         elif current_statename in self.accept_names:

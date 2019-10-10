@@ -460,20 +460,23 @@ def build_logical_resettimedwords(element, e, e_index):
     lrtws = [tw for tw in element.tws]
     temp_suffixes_timedwords = [ResetTimedword(tw.action,tw.time, element.suffixes_resets[e_index][j]) for tw, j in zip(e, range(len(e)))]
     lrtws = lrtws + temp_suffixes_timedwords
-    flag = is_valid_rtws(lrtws)
-    return lrtws, flag
+    # flag = is_valid_rtws(lrtws)
+    # return lrtws, flag
+    return lrtws, True
 
 def fill(element, E, ota):
     """Fill an element in S U R.
     """
     local_tws = element.tws
-    if False == is_valid_rtws(local_tws):
-        return False
+    # if False == is_valid_rtws(local_tws):
+    #     return False
     delay_tws = lRTWs_to_DTWs(local_tws)
     #current_location_name = ota.run_delaytimedwords(delay_tws)
     if len(element.value) == 0:
     #if len(E) == 0:
         f = ota.is_accepted_delay(delay_tws)
+        if f == -2:
+            return False
         element.value.append(f)
         #return True
     # if current_location_name == ota.sink_name:
@@ -486,6 +489,8 @@ def fill(element, E, ota):
         if flag == True:
             delay_tws = lRTWs_to_DTWs(lrtws)
             f = ota.is_accepted_delay(delay_tws)
+            if f == -2:
+                return False
             element.value.append(f)
                 #return True
         else:
