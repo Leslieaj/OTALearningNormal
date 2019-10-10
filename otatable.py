@@ -48,10 +48,10 @@ class OTATable(object):
     
     def is_prepared(self, ota):
         flag_closed, new_S, new_R, move = self.is_closed()
-        flag_consistent, new_a, new_e_index = self.is_consistent()
-        flag_evid_closed, new_added = self.is_evidence_closed(ota)
-        #if flag_closed == True and flag_consistent == True: #and flag_evid_closed == True:
-        if flag_closed == True and flag_consistent == True and flag_evid_closed == True:
+        flag_consistent, new_a, new_e_index, i, j, reset = self.is_consistent()
+        #flag_evid_closed, new_added = self.is_evidence_closed(ota)
+        if flag_closed == True and flag_consistent == True: #and flag_evid_closed == True:
+        #if flag_closed == True and flag_consistent == True and flag_evid_closed == True:
             return True
         else:
             return False
@@ -466,6 +466,8 @@ def fill(element, E, ota):
     """Fill an element in S U R.
     """
     local_tws = element.tws
+    if False == is_valid_rtws(local_tws):
+        return False
     delay_tws = lRTWs_to_DTWs(local_tws)
     #current_location_name = ota.run_delaytimedwords(delay_tws)
     if len(element.value) == 0:

@@ -56,17 +56,25 @@ def to_fa(otatable, n):
         need_newtran = True
         for tran in trans:
             if source == tran.source and target == tran.target:
+                # # check whether a is valid, (in other thans which have the same time action but different reset)
+                # if a.action == tran.label[0].action and a.reset != tran.label[0].reset:
+                #     if a.time in [tran_action.time for tran_action in tran.label]:
+                #         return False, None, ""
                 if a.action == tran.label[0].action and a.reset == tran.label[0].reset:
                     need_newtran = False
                     if a not in tran.label:
                         tran.label.append(a)
+                        for tr in trans:
+                            if a.action == tr.label[0].action and a.reset != tr.label[0].reset:
+                                if a.time in [tran_action.time for tran_action in tr.label]:
+                                    return False, None, ""
                     break
         if need_newtran == True:
             temp_tran = FATran(trans_number, source, target, [a])
             trans.append(temp_tran)
             trans_number = trans_number + 1
     fa = FA("FA_"+str(n),rtw_alphabet,states,trans,initstate_name,accept_names)
-    return fa , sink_name
+    return True, fa , sink_name
 
 def fa_to_ota(fa, sink_name, sigma, n):
     """Transform the finite automaton to an one-clock timed automaton as a hypothesis.

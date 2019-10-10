@@ -196,6 +196,8 @@ class OTA(object):
         """Run a delay timed words, return the final location name.
         """
         length = len(tws)
+        #print("---tws----")
+        #print(tws)
         if length == 0:
             return self.initstate_name
         else:
