@@ -4,7 +4,7 @@ import unittest
 import sys,os
 sys.path.append('../')
 from ota import buildAssistantOTA, buildOTA, ResetTimedword, Timedword, dRTWs_to_lRTWs
-from otatable import init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes, add_ctx_normal, make_closed
+from otatable import OTATable, init_table_normal, Element, guess_resets_in_suffixes, guess_resets_in_newsuffix, normalize, prefixes, add_ctx_normal, make_closed, make_consistent
 from equivalence import equivalence_query_normal, guess_ctx_reset
 
 class EquivalenceTest(unittest.TestCase):
@@ -54,11 +54,89 @@ class EquivalenceTest(unittest.TestCase):
         self.assertEqual(flag_closed, False)
         tables = make_closed(new_S, new_R, move, T1_tables[0], sigma, AA)
         print("--------------make closed---------------------")
-        print(len(tables))
-        for table in tables:
-            table.show()
-            print("--------------------------")
+        self.assertEqual(len(tables),8)
+        # print(len(tables))
+        # for table in tables:
+        #     table.show()
+        #     print("--------------------------")
     
+    def test_is_consistent(self):
+        A, _ = buildOTA('example2.json', 's')
+        AA = buildAssistantOTA(A, 's')  # Assist
+        max_time_value = AA.max_time_value()
+        sigma = AA.sigma
+
+        s1 = Element([],[0],[])
+        s2 = Element([ResetTimedword('a',0,True)],[-1],[])
+        s3 = Element([ResetTimedword('a',1,False),ResetTimedword('b',2,True)],[1],[])
+
+        r1 = Element([ResetTimedword('b',0,True)],[-1],[])
+        r2 = Element([ResetTimedword('a',0,True),ResetTimedword('a',0,True)],[-1],[])
+        r3 = Element([ResetTimedword('a',0,True),ResetTimedword('b',0,True)],[-1],[])
+        r4 = Element([ResetTimedword('a',1,False)],[0],[])
+        r5 = Element([ResetTimedword('a',1,False),ResetTimedword('b',2,True),ResetTimedword('a',0,False)],[0],[])
+        r6 = Element([ResetTimedword('a',1,False),ResetTimedword('b',2,True),ResetTimedword('b',0,True)],[-1],[])
+        r7 = Element([ResetTimedword('b',2,True)],[-1],[])
+
+        new_S = [s1,s2,s3]
+        new_R = [r1,r2,r3,r4,r5,r6,r7]
+        for s in new_S:
+            self.assertEqual(AA.is_accepted_delay(dRTWs_to_lRTWs(s.tws)),s.value[0])
+        for r in new_R:
+            self.assertEqual(AA.is_accepted_delay(dRTWs_to_lRTWs(r.tws)),r.value[0])
+        new_E = []
+        T5 = OTATable(new_S,new_R,new_E)
+        # T5.show()
+        print("-----------is consistent----------------")
+        flag, new_a, new_e_index, i, j, reset = T5.is_consistent()
+        self.assertEqual(flag, False)
+        self.assertEqual(new_a, [ResetTimedword('b',2,True)])
+        self.assertEqual(new_e_index,0)
+        self.assertEqual(i,0)
+        self.assertEqual(j,6)
+        self.assertEqual(reset, True)
+        #print(flag, new_a, new_e_index, i, j, reset)
+
+    def test_make_consistent(self):
+        A, _ = buildOTA('example2.json', 's')
+        AA = buildAssistantOTA(A, 's')  # Assist
+        max_time_value = AA.max_time_value()
+        sigma = AA.sigma
+
+        s1 = Element([],[0],[])
+        s2 = Element([ResetTimedword('a',0,True)],[-1],[])
+        s3 = Element([ResetTimedword('a',1,False),ResetTimedword('b',2,True)],[1],[])
+
+        r1 = Element([ResetTimedword('b',0,True)],[-1],[])
+        r2 = Element([ResetTimedword('a',0,True),ResetTimedword('a',0,True)],[-1],[])
+        r3 = Element([ResetTimedword('a',0,True),ResetTimedword('b',0,True)],[-1],[])
+        r4 = Element([ResetTimedword('a',1,False)],[0],[])
+        r5 = Element([ResetTimedword('a',1,False),ResetTimedword('b',2,True),ResetTimedword('a',0,False)],[0],[])
+        r6 = Element([ResetTimedword('a',1,False),ResetTimedword('b',2,True),ResetTimedword('b',0,True)],[-1],[])
+        r7 = Element([ResetTimedword('b',2,True)],[-1],[])
+
+        new_S = [s1,s2,s3]
+        new_R = [r1,r2,r3,r4,r5,r6,r7]
+        new_E = []
+        T5 = OTATable(new_S,new_R,new_E)
+        # T5.show()
+        print("-----------make consistent----------------")
+        flag, new_a, new_e_index, i, j, reset = T5.is_consistent()
+        self.assertEqual(flag, False)
+        tables = make_consistent(new_a, new_e_index, i, j, reset, T5, sigma, AA)
+        for tb in tables:
+            S_U_R = [s for s in tb.S] + [r for r in tb.R]
+            self.assertEqual(S_U_R[i].suffixes_resets[-1], [reset])
+            self.assertEqual(S_U_R[j].suffixes_resets[-1], [reset])
+        # print(len(tables))
+        # tables[0].show()
+        # print("-----------")
+        # tables[1].show()
+        # print("-----------")
+        # tables[2].show()
+        # print("-----------")
+        # tables[100].show()
+
     def test_guess_resets_in_suffixes(self):
         A, _ = buildOTA('example6.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist

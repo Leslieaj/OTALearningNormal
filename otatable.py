@@ -257,16 +257,24 @@ def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset, table, 
         for resets in situation:
             temp_situation.extend(resets)
         if temp_situation[fix_reset_i] == temp_situation[fix_reset_j] and temp_situation[fix_reset_i] == reset:
-            new_S = [s for s in table.S]
-            new_R = [r for r in table.R]
+            temp_table = copy.deepcopy(table)
+            temp_table.E = copy.deepcopy(new_E)
+            flag_valid = True
             for i in range(0,len(situation)):
-                #length = len(new_S) + len(new_R)
-                if i < len(table.s):
-                    new_S[i].suffixes_resets.append(situation[i])
+                if i < len(table.S):
+                    temp_table.S[i].suffixes_resets.append(situation[i])
+                    if True == fill(temp_table.S[i],temp_table.E, ota):
+                        pass
+                    else:
+                        flag_valid = False
                 else:
-                    new_R[i-len(new_S)].suffixes_resets.append(situation[i])
-            temp_table = OTATable(new_S, new_R, new_E)
-            OTAtables.append(temp_table)
+                    temp_table.R[i-len(temp_table.S)].suffixes_resets.append(situation[i])
+                    if True == fill(temp_table.R[i-len(temp_table.S)],temp_table.E, ota):
+                        pass
+                    else:
+                        flag_valid = False
+            if flag_valid == True:
+                OTAtables.append(temp_table)
     return OTAtables
 
 def prefixes(tws):
