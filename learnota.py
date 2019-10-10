@@ -54,23 +54,27 @@ def main():
             while prepared == False:
                 flag_closed, new_S, new_R, move = current_table.is_closed()
                 if flag_closed == False:
+                    print("------------------make closed--------------------------")
                     temp_tables = make_closed(new_S, new_R, move, current_table, sigma, AA)
                     if len(temp_tables) > 0:
-                        index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
-                        for i in range(0, len(temp_tables)):
-                            need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        # index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
+                        # for i in range(0, len(temp_tables)):
+                        #     need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
                     print("Table " + str(t_number) + " is as follow.")
                     current_table.show()
                     print("--------------------------------------------------")
-                flag_consistent, new_a, new_e_index, reset_index_i, reset_index_j, reset = current_table.is_consistent()
+                flag_consistent, new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j = current_table.is_consistent()
                 if flag_consistent == False:
-                    temp_tables = make_consistent(new_a, new_e_index, reset_index_i, reset_index_j, reset, current_table, sigma, AA)
+                    print("------------------make consistent--------------------------")
+                    temp_tables = make_consistent(new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j, current_table, sigma, AA)
                     if len(temp_tables) > 0:
-                        index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
-                        for i in range(0, len(temp_tables)):
-                            need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        # index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
+                        # for i in range(0, len(temp_tables)):
+                        #     need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
                     print("Table " + str(t_number) + " is as follow.")
@@ -81,32 +85,32 @@ def main():
             
             fa_flag, fa, sink_name = to_fa(current_table, t_number)
             if fa_flag == False:
-                break
-            #if fa_flag == False:
                 #print(t_number)
-                # current_table = copy.deepcopy(need_to_explore.pop(0))
-                # t_number = t_number + 1
-                # print("Table " + str(t_number) + " is as follow.")
-                # current_table.show()
-                # print("--------------------------------------------------")
-            #else:
-            h = fa_to_ota(fa, sink_name, sigma, t_number)
-            target = copy.deepcopy(h)
-            eq_start = time.time()
-            equivalent, ctx = equivalence_query_normal(max_time_value,AA,h)
-            eq_end = time.time()
-            eq_total_time = eq_total_time + eq_end - eq_start
-            eq_number = eq_number + 1
-            if equivalent == False:
-                temp_tables = add_ctx_normal(ctx.tws,current_table,AA)
-                index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
-                for i in range(0, len(temp_tables)):
-                    need_to_explore.insert(index_to_insert+i, temp_tables[i])
                 current_table = copy.deepcopy(need_to_explore.pop(0))
                 t_number = t_number + 1
                 print("Table " + str(t_number) + " is as follow.")
                 current_table.show()
                 print("--------------------------------------------------")
+            else:
+                h = fa_to_ota(fa, sink_name, sigma, t_number)
+                target = copy.deepcopy(h)
+                eq_start = time.time()
+                equivalent, ctx = equivalence_query_normal(max_time_value,AA,h)
+                eq_end = time.time()
+                eq_total_time = eq_total_time + eq_end - eq_start
+                eq_number = eq_number + 1
+                if equivalent == False:
+                    temp_tables = add_ctx_normal(ctx.tws,current_table,AA)
+                    if len(temp_tables) > 0:
+                        # index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
+                        # for i in range(0, len(temp_tables)):
+                        #     need_to_explore.insert(index_to_insert+i, temp_tables[i])
+                        need_to_explore.extend(temp_tables)
+                    current_table = copy.deepcopy(need_to_explore.pop(0))
+                    t_number = t_number + 1
+                    print("Table " + str(t_number) + " is as follow.")
+                    current_table.show()
+                    print("--------------------------------------------------")
         end_learning = time.time()
         if target is None:
             print("Error! Learning Failed.")

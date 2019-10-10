@@ -48,7 +48,7 @@ class OTATable(object):
     
     def is_prepared(self, ota):
         flag_closed, new_S, new_R, move = self.is_closed()
-        flag_consistent, new_a, new_e_index, i, j, reset = self.is_consistent()
+        flag_consistent, new_a, new_e_index, i, j, reset_i, reset_j = self.is_consistent()
         #flag_evid_closed, new_added = self.is_evidence_closed(ota)
         if flag_closed == True and flag_consistent == True: #and flag_evid_closed == True:
         #if flag_closed == True and flag_consistent == True and flag_evid_closed == True:
@@ -122,9 +122,10 @@ class OTATable(object):
                                     for k in range(0, len(e1.value)):
                                         if e1.value[k] != e2.value[k]:
                                             new_e_index = k
-                                            reset = e1.tws[0].reset
-                                            return flag, new_a, new_e_index, i, j, reset
-        return flag, new_a, new_e_index, i, j, True
+                                            reset_i = e1.tws[0].reset
+                                            reset_j = e2.tws[0].reset
+                                            return flag, new_a, new_e_index, i, j, reset_i, reset_j
+        return flag, new_a, new_e_index, i, j, True, True
 
     def is_evidence_closed(self, ota):
         """Determine whether the table is evidence-closed.
@@ -240,7 +241,7 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
         #print("b", len(OTAtables_after_guessing_resets))
     return OTAtables_after_guessing_resets
 
-def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset, table, sigma, ota):
+def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset_i, reset_j, table, sigma, ota):
     """Make table consistent.
     """
     new_E = [tws for tws in table.E]
@@ -256,7 +257,7 @@ def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset, table, 
         temp_situation = []
         for resets in situation:
             temp_situation.extend(resets)
-        if temp_situation[fix_reset_i] == temp_situation[fix_reset_j] and temp_situation[fix_reset_i] == reset:
+        if temp_situation[fix_reset_i] == reset_i and temp_situation[fix_reset_j] == reset_j:
             temp_table = copy.deepcopy(table)
             temp_table.E = copy.deepcopy(new_E)
             flag_valid = True
