@@ -17,6 +17,9 @@ def find_insert_place(tb, tblist):
 def main():
     #print("------------------A-----------------")
     paras = sys.argv
+
+    debug_flag = True
+
     A,_ = buildOTA(paras[1], 's')
     #A,_ = buildOTA("example.json", 's')
     #A.show()
@@ -48,15 +51,19 @@ def main():
     while len(need_to_explore)>0:
         current_table = copy.deepcopy(need_to_explore.pop(0))
         t_number = t_number + 1
-        print("Table " + str(t_number) + " is as follow.")
-        current_table.show()
-        print("--------------------------------------------------")
+        if debug_flag:
+            print("Table " + str(t_number) + " is as follow, %s has parent %s by %s" % (current_table.id, current_table.parent, current_table.reason))
+            current_table.show()
+            print("--------------------------------------------------")
         while equivalent == False:
             prepared = current_table.is_prepared(AA)
             while prepared == False:
+                # if t_number % 100 == 0:
+                #     print(t_number)
                 flag_closed, new_S, new_R, move = current_table.is_closed()
                 if flag_closed == False:
-                    print("------------------make closed--------------------------")
+                    if debug_flag:
+                        print("------------------make closed--------------------------")
                     temp_tables = make_closed(new_S, new_R, move, current_table, sigma, AA)
                     if len(temp_tables) > 0:
                         index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
@@ -65,12 +72,14 @@ def main():
                         # need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
-                    print("Table " + str(t_number) + " is as follow.")
-                    current_table.show()
-                    print("--------------------------------------------------")
+                    if debug_flag:
+                        print("Table " + str(t_number) + " is as follow, %s has parent %s by %s" % (current_table.id, current_table.parent, current_table.reason))
+                        current_table.show()
+                        print("--------------------------------------------------")
                 flag_consistent, new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j = current_table.is_consistent()
                 if flag_consistent == False:
-                    print("------------------make consistent--------------------------")
+                    if debug_flag:
+                        print("------------------make consistent--------------------------")
                     temp_tables = make_consistent(new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j, current_table, sigma, AA)
                     if len(temp_tables) > 0:
                         index_to_insert = find_insert_place(temp_tables[0], need_to_explore)
@@ -79,9 +88,10 @@ def main():
                         # need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
-                    print("Table " + str(t_number) + " is as follow.")
-                    current_table.show()
-                    print("--------------------------------------------------")
+                    if debug_flag:
+                        print("Table " + str(t_number) + " is as follow, %s has parent %s by %s" % (current_table.id, current_table.parent, current_table.reason))
+                        current_table.show()
+                        print("--------------------------------------------------")
                 # current_table = copy.deepcopy(need_to_explore.pop(0))
                 prepared = current_table.is_prepared(AA)
             
@@ -90,9 +100,10 @@ def main():
                 #print(t_number)
                 current_table = copy.deepcopy(need_to_explore.pop(0))
                 t_number = t_number + 1
-                print("Table " + str(t_number) + " is as follow.")
-                current_table.show()
-                print("--------------------------------------------------")
+                if debug_flag:
+                    print("Table " + str(t_number) + " is as follow, %s has parent %s by %s" % (current_table.id, current_table.parent, current_table.reason))
+                    current_table.show()
+                    print("--------------------------------------------------")
             else:
                 h = fa_to_ota(fa, sink_name, sigma, t_number)
                 target = copy.deepcopy(h)
@@ -110,9 +121,10 @@ def main():
                         #need_to_explore.extend(temp_tables)
                     current_table = copy.deepcopy(need_to_explore.pop(0))
                     t_number = t_number + 1
-                    print("Table " + str(t_number) + " is as follow.")
-                    current_table.show()
-                    print("--------------------------------------------------")
+                    if debug_flag:
+                        print("Table " + str(t_number) + " is as follow, %s has parent %s by %s" % (current_table.id, current_table.parent, current_table.reason))
+                        current_table.show()
+                        print("--------------------------------------------------")
         end_learning = time.time()
         if target is None:
             print("Error! Learning Failed.")

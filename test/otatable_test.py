@@ -85,7 +85,7 @@ class EquivalenceTest(unittest.TestCase):
         for r in new_R:
             self.assertEqual(AA.is_accepted_delay(dRTWs_to_lRTWs(r.tws)),r.value[0])
         new_E = []
-        T5 = OTATable(new_S,new_R,new_E)
+        T5 = OTATable(new_S,new_R,new_E,parent=-1,reason="test")
         # T5.show()
         print("-----------is consistent----------------")
         flag, new_a, new_e_index, i, j, reset = T5.is_consistent()
@@ -118,16 +118,16 @@ class EquivalenceTest(unittest.TestCase):
         new_S = [s1,s2,s3]
         new_R = [r1,r2,r3,r4,r5,r6,r7]
         new_E = []
-        T5 = OTATable(new_S,new_R,new_E)
+        T5 = OTATable(new_S,new_R,new_E,parent=-1,reason="test")
         # T5.show()
         print("-----------make consistent----------------")
-        flag, new_a, new_e_index, i, j, reset = T5.is_consistent()
+        flag, new_a, new_e_index, i, j, reset_i, reset_j = T5.is_consistent()
         self.assertEqual(flag, False)
-        tables = make_consistent(new_a, new_e_index, i, j, reset, T5, sigma, AA)
+        tables = make_consistent(new_a, new_e_index, i, j, reset_i, reset_j, T5, sigma, AA)
         for tb in tables:
             S_U_R = [s for s in tb.S] + [r for r in tb.R]
-            self.assertEqual(S_U_R[i].suffixes_resets[-1], [reset])
-            self.assertEqual(S_U_R[j].suffixes_resets[-1], [reset])
+            self.assertEqual(S_U_R[i].suffixes_resets[-1], [reset_i])
+            self.assertEqual(S_U_R[j].suffixes_resets[-1], [reset_j])
         # print(len(tables))
         # tables[0].show()
         # print("-----------")

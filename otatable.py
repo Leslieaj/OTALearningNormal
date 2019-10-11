@@ -38,13 +38,20 @@ class Element(object):
     def show(self):
         return [tw.show() for tw in self.tws], self.value, self.suffixes_resets
 
+table_id = 0
+
 class OTATable(object):
     """The definition of OTA observation table.
     """
-    def __init__(self, S = None, R = None, E=[]):
+    def __init__(self, S = None, R = None, E=[], *, parent, reason):
+        global table_id
         self.S = S
         self.R = R
         self.E = E #if E is empty, it means that there is an empty action in E.
+        self.id = table_id
+        table_id += 1
+        self.parent = parent
+        self.reason = reason
     
     def is_prepared(self, ota):
         flag_closed, new_S, new_R, move = self.is_closed()
@@ -191,7 +198,7 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
     """Make table closed.
     """
     new_E = table.E
-    closed_table = OTATable(new_S, new_R, new_E)
+    closed_table = OTATable(new_S, new_R, new_E, parent=table.id, reason="makeclosed")
     table_tws = [s.tws for s in closed_table.S] + [r.tws for r in closed_table.R]
     temp_resets = [[]]
     for i in range(0,len(sigma)):
@@ -214,7 +221,7 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
             if new_r not in table_tws:
                 new_rs.append(Element(new_r,[],[]))
         temp_R = [r for r in new_R] + new_rs
-        temp_table = OTATable(new_S, temp_R, new_E)
+        temp_table = OTATable(new_S, temp_R, new_E, parent=table.id, reason="makeclosed")
         OTAtables.append(temp_table)
     #return OTAtables
     #guess the resets of suffixes for each prefix and fill
@@ -230,7 +237,7 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
             for j in range(0, len(resets_situtations)):
                 for temp_table in temp_otatables:
                     new_table = copy.deepcopy(temp_table)
-                    temp_otatable = OTATable(new_table.S, new_table.R, new_table.E)
+                    temp_otatable = OTATable(new_table.S, new_table.R, new_table.E, parent=table.id, reason="makeclosed")
                     temp_otatable.R[i].suffixes_resets = resets_situtations[j]
                     new_table = copy.deepcopy(temp_otatable)
                     if True == fill(new_table.R[i],new_table.E,ota):
@@ -250,7 +257,7 @@ def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset_i, reset
         e = table.E[new_e_index-1]
         new_e.extend(e)
     new_E.append(new_e)
-    new_table = OTATable(table.S,table.R,new_E)
+    new_table = OTATable(table.S,table.R,new_E, parent=table.id, reason="makeconsistent")
     temp_suffixes_resets = guess_resets_in_newsuffix(new_table)
     OTAtables = []
     for situation in temp_suffixes_resets:
@@ -323,7 +330,7 @@ def init_table_normal(sigma, ota):
             s.value.append(1)
         else:
             s.value.append(0)
-    tables = [OTATable(S, R, E)]
+    tables = [OTATable(S, R, E, parent=-1, reason="init")]
     for i in range(0, len(sigma)):
         temp_tables = []
         for table in tables:
@@ -336,15 +343,16 @@ def init_table_normal(sigma, ota):
                     if tran.target in ota.accept_names:
                         new_value = [1]
                     elif tran.target == ota.sink_name:
-                        new_value = [-1]
+                        #new_value = [-1]
+                        new_value = [0]
                     else:
                         new_value = [0]
                     new_element_n = Element([new_rtw_n], new_value)
                     new_element_r = Element([new_rtw_r], new_value)
                     temp_R_n = table.R + [new_element_n]
                     temp_R_r = table.R + [new_element_r]
-                    new_table_n = OTATable(S, temp_R_n, E)
-                    new_table_r = OTATable(S, temp_R_r, E)
+                    new_table_n = OTATable(S, temp_R_n, E, parent=-1, reason="init")
+                    new_table_r = OTATable(S, temp_R_r, E, parent=-1, reason="init")
                     temp_tables.append(new_table_n)
                     temp_tables.append(new_table_r)
                     break
@@ -528,8 +536,9 @@ def add_ctx_normal(dtws, table, ota):
                     temp_element = Element(tws,[],[])
                     #fill(temp_element, new_E, ota)
                     new_R.append(temp_element)
-            new_OTAtable = OTATable(new_S, new_R, new_E)
-            OTAtables.append(new_OTAtable)
+            if len(new_R) > len(table.R):
+                new_OTAtable = OTATable(new_S, new_R, new_E, parent=table.id, reason="addctx")
+                OTAtables.append(new_OTAtable)
     #return OTAtables
     #guess the resets of suffixes for each prefix and fill
     OTAtables_after_guessing_resets = []
@@ -545,7 +554,7 @@ def add_ctx_normal(dtws, table, ota):
             for j in range(0, len(resets_situtations)):
                 for temp_table in temp_otatables:
                     new_table = copy.deepcopy(temp_table)
-                    temp_otatable = OTATable(new_table.S, new_table.R, new_table.E)
+                    temp_otatable = OTATable(new_table.S, new_table.R, new_table.E, parent=table.id, reason="addctx")
                     temp_otatable.R[i].suffixes_resets = resets_situtations[j]
                     new_table = copy.deepcopy(temp_otatable)
                     if True == fill(new_table.R[i],new_table.E,ota):
