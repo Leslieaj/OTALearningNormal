@@ -88,13 +88,13 @@ class EquivalenceTest(unittest.TestCase):
         T5 = OTATable(new_S,new_R,new_E,parent=-1,reason="test")
         # T5.show()
         print("-----------is consistent----------------")
-        flag, new_a, new_e_index, i, j, reset = T5.is_consistent()
+        flag, new_a, new_e_index, i, j, reset_i, reset_j = T5.is_consistent()
         self.assertEqual(flag, False)
         self.assertEqual(new_a, [ResetTimedword('b',2,True)])
         self.assertEqual(new_e_index,0)
         self.assertEqual(i,0)
         self.assertEqual(j,6)
-        self.assertEqual(reset, True)
+        self.assertEqual(reset_i, True)
         #print(flag, new_a, new_e_index, i, j, reset)
 
     def test_make_consistent(self):

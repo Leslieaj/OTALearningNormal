@@ -230,8 +230,8 @@ class OTA(object):
         if flag == False:
             return -2
         if current_statename == self.sink_name:
-            #return -1
-            return 0
+            return -1
+            #return 0
         elif current_statename in self.accept_names:
             return 1
         else:
