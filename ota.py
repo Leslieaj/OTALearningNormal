@@ -368,6 +368,7 @@ def lRTWs_to_DTWs(logical_resettimedwords):
     current_clock_valuation = 0
     delay_timedwords = []
     for lrtw in logical_resettimedwords:
+        assert reset is not None
         if reset == True:
             delay_time = lrtw.time
         else:

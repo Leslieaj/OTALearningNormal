@@ -232,13 +232,18 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
         temp_otatables = [otatable]
         #print(new_r_start_index, new_r_end_index)
         for i in range(new_r_start_index, new_r_end_index):
-            resets_situtations = guess_resets_in_suffixes(otatable)
+            # res = get_empty_E(otatable.R[i], ota)
+            # if res == -1:
+            #     resets_situations = guess_resets_in_suffixes(otatable, to_guess=False)
+            # else:
+            #     resets_situations = guess_resets_in_suffixes(otatable)
+            resets_situations = guess_resets_in_suffixes(otatable)
             new_tables = []
-            for j in range(0, len(resets_situtations)):
+            for j in range(0, len(resets_situations)):
                 for temp_table in temp_otatables:
                     new_table = copy.deepcopy(temp_table)
                     temp_otatable = OTATable(new_table.S, new_table.R, new_table.E, parent=table.id, reason="makeclosed")
-                    temp_otatable.R[i].suffixes_resets = resets_situtations[j]
+                    temp_otatable.R[i].suffixes_resets = resets_situations[j]
                     new_table = copy.deepcopy(temp_otatable)
                     if True == fill(new_table.R[i],new_table.E,ota):
                         new_tables.append(new_table)
@@ -264,7 +269,7 @@ def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset_i, reset
         temp_situation = []
         for resets in situation:
             temp_situation.extend(resets)
-        if temp_situation[fix_reset_i] == reset_i and temp_situation[fix_reset_j] == reset_j:
+        if temp_situation[fix_reset_i] in (None, reset_i) and temp_situation[fix_reset_j] in (None, reset_j):
             temp_table = copy.deepcopy(table)
             temp_table.E = copy.deepcopy(new_E)
             flag_valid = True
@@ -359,22 +364,27 @@ def init_table_normal(sigma, ota):
         tables = temp_tables
     return tables
 
-def guess_resets_in_suffixes(table):
+def guess_resets_in_suffixes(table, to_guess=True):
     """Given a table T, before membership querying, we need to guess the reset in the suffixes.
     This method is for one element in S or R. 
     """
     temp_suffixes_resets = []
-    length = 0
+    cur_pos = 0
+    end_pos = []
     for e in table.E:
-        length = length + len(e)
+       cur_pos += len(e)
+       end_pos.append(cur_pos)
+    length = cur_pos
+
     temp_resets = [[]]
-    for i in range(0,length):
+    for i in range(length):
         temp = []
         for resets_situation in temp_resets:
-            temp_R = resets_situation + [True]
-            temp_N = resets_situation + [False]
-            temp.append(temp_R)
-            temp.append(temp_N)
+            if i + 1 in end_pos or not to_guess:
+                temp.append(resets_situation + [None])
+            else:
+                temp.append(resets_situation + [True])
+                temp.append(resets_situation + [False])
         temp_resets = temp
     for resets_situation in temp_resets:
         index = 0
@@ -392,17 +402,18 @@ def guess_resets_in_newsuffix(table):
     """When making consistent, guess the resets in the new suffix.
     """
     temp_suffixes_resets = []
-    new_e_length = len(table.E[len(table.E)-1])
+    new_e_length = len(table.E[-1])
     S_U_R_length = len(table.S) + len(table.R)
-    length = S_U_R_length*new_e_length
+    length = S_U_R_length * new_e_length
     temp_resets = [[]]
     for i in range(0,length):
         temp = []
         for resets_situation in temp_resets:
-            temp_R = resets_situation + [True]
-            temp_N = resets_situation + [False]
-            temp.append(temp_R)
-            temp.append(temp_N)
+            if i % new_e_length == new_e_length - 1:
+                temp.append(resets_situation + [None])
+            else:
+                temp.append(resets_situation + [True])
+                temp.append(resets_situation + [False])
         temp_resets = temp
     for resets_situation in temp_resets:
         index = 0
@@ -466,32 +477,31 @@ def build_logical_resettimedwords(element, e, e_index):
     """build a logical reset timedwords based on an element in S,R and a suffix e in E.
     """
     lrtws = [tw for tw in element.tws]
-    temp_suffixes_timedwords = [ResetTimedword(tw.action,tw.time, element.suffixes_resets[e_index][j]) for tw, j in zip(e, range(len(e)))]
+    temp_suffixes_timedwords = [ResetTimedword(tw.action, tw.time, element.suffixes_resets[e_index][j])
+                                for j, tw in enumerate(e)]
     lrtws = lrtws + temp_suffixes_timedwords
     # flag = is_valid_rtws(lrtws)
     # return lrtws, flag
     return lrtws, True
 
+def get_empty_E(element, ota):
+    """Return the result of running element on ota."""
+    local_tws = element.tws
+    delay_tws = lRTWs_to_DTWs(local_tws)
+    return ota.is_accepted_delay(delay_tws)
+
+
 def fill(element, E, ota):
     """Fill an element in S U R.
     """
     local_tws = element.tws
-    # if False == is_valid_rtws(local_tws):
-    #     return False
     delay_tws = lRTWs_to_DTWs(local_tws)
-    #current_location_name = ota.run_delaytimedwords(delay_tws)
     if len(element.value) == 0:
-    #if len(E) == 0:
         f = ota.is_accepted_delay(delay_tws)
         if f == -2:
             return False
         element.value.append(f)
-        #return True
-    # if current_location_name == ota.sink_name:
-    #     for i in range(len(element.value)-1, len(E)):
-    #         element.value.append(-1)
-    #         return True
-    # else:
+
     for i in range(len(element.value)-1, len(E)):
         lrtws, flag = build_logical_resettimedwords(element, E[i], i)
         if flag == True:
@@ -500,7 +510,6 @@ def fill(element, E, ota):
             if f == -2:
                 return False
             element.value.append(f)
-                #return True
         else:
             return False
     return True
@@ -548,14 +557,14 @@ def add_ctx_normal(dtws, table, ota):
         temp_otatables = [otatable]
         #print(new_r_start_index, new_r_end_index)
         for i in range(new_r_start_index, new_r_end_index):
-            resets_situtations = guess_resets_in_suffixes(otatable)
-            #print(len(resets_situtations))
+            resets_situations = guess_resets_in_suffixes(otatable)
+            #print(len(resets_situations))
             new_tables = []
-            for j in range(0, len(resets_situtations)):
+            for j in range(0, len(resets_situations)):
                 for temp_table in temp_otatables:
                     new_table = copy.deepcopy(temp_table)
                     temp_otatable = OTATable(new_table.S, new_table.R, new_table.E, parent=table.id, reason="addctx")
-                    temp_otatable.R[i].suffixes_resets = resets_situtations[j]
+                    temp_otatable.R[i].suffixes_resets = resets_situations[j]
                     new_table = copy.deepcopy(temp_otatable)
                     if True == fill(new_table.R[i],new_table.E,ota):
                         new_tables.append(new_table)

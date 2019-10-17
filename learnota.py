@@ -14,13 +14,9 @@ def find_insert_place(tb, tblist):
             return index
     return len(tblist) - 1
 
-def main():
+def learn_ota(paras, debug_flag):
     #print("------------------A-----------------")
-    paras = sys.argv
-
-    debug_flag = True
-
-    A,_ = buildOTA(paras[1], 's')
+    A,_ = buildOTA(paras, 's')
     #A,_ = buildOTA("example.json", 's')
     #A.show()
     #print("------------------Assist-----------------")
@@ -40,6 +36,9 @@ def main():
     need_to_explore = []
     need_to_explore.extend(T1_tables)
 
+    # List of existing counterexamples
+    prev_ctx = []
+
     # Current number of tables
     t_number = 0
     start = time.time()
@@ -58,8 +57,8 @@ def main():
         while equivalent == False:
             prepared = current_table.is_prepared(AA)
             while prepared == False:
-                # if t_number % 100 == 0:
-                #     print(t_number)
+                if t_number % 100 == 0:
+                    print(t_number)
                 flag_closed, new_S, new_R, move = current_table.is_closed()
                 if flag_closed == False:
                     if debug_flag:
@@ -96,6 +95,8 @@ def main():
                 prepared = current_table.is_prepared(AA)
             
             fa_flag, fa, sink_name = to_fa(current_table, t_number)
+            if t_number % 100 == 0:
+                print(t_number)
             if fa_flag == False:
                 #print(t_number)
                 current_table = copy.deepcopy(need_to_explore.pop(0))
@@ -108,7 +109,10 @@ def main():
                 h = fa_to_ota(fa, sink_name, sigma, t_number)
                 target = copy.deepcopy(h)
                 eq_start = time.time()
-                equivalent, ctx = equivalence_query_normal(max_time_value,AA,h)
+                equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
+                # Add counterexample to prev list
+                if not equivalent and ctx not in prev_ctx:
+                    prev_ctx.append(ctx)
                 eq_end = time.time()
                 eq_total_time = eq_total_time + eq_end - eq_start
                 eq_number = eq_number + 1
@@ -135,8 +139,14 @@ def main():
             print("---------------------------------------------------")
             target.show()
             print("---------------------------------------------------")
+            print("Total number of tables explored: " + str(t_number))
+            print("Total number of tables to explore: " + str(len(need_to_explore)))
             print("Total time of learning: " + str(end_learning-start))
             return True
+
+def main():
+    learn_ota(sys.argv[1], debug_flag=False)
+
 
 if __name__=='__main__':
 	main()
