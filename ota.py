@@ -431,7 +431,7 @@ def buildOTA(jsonfile, otaflag):
             ota_tran = OTATran(tran_id, source, label, constraints_list, reset, target, otaflag)
             trans += [ota_tran]
         trans.sort(key=lambda x: x.id)
-        return OTA(name, sigma, L, trans, initstate, accept_list), sigma
+        return OTA(name, sigma, L, trans, initstate, accept_list)
 
 def buildAssistantOTA(ota, otaflag):
     """
