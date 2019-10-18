@@ -97,7 +97,6 @@ class OTATable(object):
             (if tws1,tws2 in S U R, if a in sigma* tws1+a, tws2+a in S U R and row(tws1) = row(tws2), 
             then row(tws1+a) = row(tws2+a))
         """
-        flag = True
         new_a = None
         new_e_index = None
         table_element = [s for s in self.S] + [r for r in self.R]
@@ -106,33 +105,29 @@ class OTATable(object):
                 if table_element[i].row() == table_element[j].row():
                     temp_elements1 = []
                     temp_elements2 = []
-                    #print len(table_element[2].tws), [tw.show() for tw in table_element[2].tws]
                     for element in table_element:
-                        #print "element", [tw.show() for tw in element.tws]
-                        if is_prefix(element.tws, table_element[i].tws):
-                            new_element1 = Element(delete_prefix(element.tws, table_element[i].tws), [v for v in element.value], []) #-----------todo---------
+                        if len(element.tws) == len(table_element[i].tws) + 1 and \
+                           element.tws[:-1] == table_element[i].tws:
+                            new_element1 = Element([element.tws[-1]], [v for v in element.value], [])
                             temp_elements1.append(new_element1)
-                        if is_prefix(element.tws, table_element[j].tws):
-                            #print "e2", [tw.show() for tw in element.tws]
-                            new_element2 = Element(delete_prefix(element.tws, table_element[j].tws), [v for v in element.value], []) #-----------todo---------
+                        if len(element.tws) == len(table_element[j].tws) + 1 and \
+                           element.tws[:-1] == table_element[j].tws:
+                            new_element2 = Element([element.tws[-1]], [v for v in element.value], [])
                             temp_elements2.append(new_element2)
                     for e1 in temp_elements1:
                         for e2 in temp_elements2:
-                            #print [tw.show() for tw in e1.tws], [tw.show() for tw in e2.tws]
-                            #if len(e1.tws) == 1 and len(e2.tws) == 1 and e1.tws == e2.tws:
-                            if len(e1.tws) == 1 and len(e2.tws) == 1 and e1.tws[0].action == e2.tws[0].action and e1.tws[0].time == e2.tws[0].time:
-                                if e1.row() == e2.row():
-                                    pass
-                                else:
-                                    flag = False
+                            assert len(e1.tws) == 1 and len(e2.tws) == 1
+                            if e1.tws[0].action == e2.tws[0].action and e1.tws[0].time == e2.tws[0].time:
+                                if e1.row() != e2.row():
                                     new_a = e1.tws
                                     for k in range(0, len(e1.value)):
                                         if e1.value[k] != e2.value[k]:
                                             new_e_index = k
                                             reset_i = e1.tws[0].reset
                                             reset_j = e2.tws[0].reset
-                                            return flag, new_a, new_e_index, i, j, reset_i, reset_j
-        return flag, new_a, new_e_index, i, j, True, True
+                                            return False, new_a, new_e_index, i, j, reset_i, reset_j
+
+        return True, new_a, new_e_index, i, j, True, True
 
     def is_evidence_closed(self, ota):
         """Determine whether the table is evidence-closed.
@@ -303,31 +298,6 @@ def prefixes(tws):
         temp_tws = tws[:i]
         prefixes.append(temp_tws)
     return prefixes
-
-def is_prefix(tws, pref):
-    """Determine whether the pref is a prefix of the timedwords tws
-    """
-    if len(pref) == 0:
-        return True
-    else:
-        if len(tws) < len(pref):
-            return False
-        else:
-            for i in range(0, len(pref)):
-                if tws[i] == pref[i]:
-                    pass
-                else:
-                    return False
-            return True
-
-def delete_prefix(tws, pref):
-    """Delete a prefix of timedwords tws, and return the new tws
-    """
-    if len(pref) == 0:
-        return [tw for tw in tws]
-    else:
-        new_tws = tws[len(pref):]
-        return new_tws
 
 def init_table_normal(sigma, ota):
     """Initial tables.
@@ -561,6 +531,7 @@ def add_ctx_normal(dtws, table, ota):
     #return OTAtables
     #guess the resets of suffixes for each prefix and fill
     OTAtables_after_guessing_resets = []
+
     for otatable in OTAtables:
         new_r_start_index = len(table.R)
         new_r_end_index = len(otatable.R)
@@ -575,12 +546,12 @@ def add_ctx_normal(dtws, table, ota):
                     new_table = copy.deepcopy(temp_table)
                     temp_otatable = OTATable(new_table.S, new_table.R, new_table.E, parent=table.id, reason="addctx")
                     temp_otatable.R[i].suffixes_resets = resets_situations[j]
-                    new_table = copy.deepcopy(temp_otatable)
-                    if True == fill(new_table.R[i],new_table.E,ota):
-                        new_tables.append(new_table)
+                    if True == fill(temp_otatable.R[i],temp_otatable.E,ota):
+                        new_tables.append(temp_otatable)
             temp_otatables = [tb for tb in new_tables]
             #print("a", len(temp_otatables))
         OTAtables_after_guessing_resets = OTAtables_after_guessing_resets + temp_otatables
         #print("b", len(OTAtables_after_guessing_resets))
+
     return OTAtables_after_guessing_resets
 
