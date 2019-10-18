@@ -137,6 +137,7 @@ def learn_ota(paras, debug_flag):
         else:
             print("Succeed! The learned OTA is as follows.")
             print("---------------------------------------------------")
+            current_table.show()
             target.show()
             print("---------------------------------------------------")
             print("Total number of tables explored: " + str(t_number))

@@ -202,16 +202,21 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
     table_tws = [s.tws for s in closed_table.S] + [r.tws for r in closed_table.R]
     temp_resets = [[]]
     for i in range(0,len(sigma)):
-        new_rtw_n = ResetTimedword(sigma[i], 0, False)
-        new_rtw_r = ResetTimedword(sigma[i], 0, True)
+        dtws = lRTWs_to_DTWs(move.tws)
+        res = ota.is_accepted_delay(dtws + [Timedword(sigma[i], 0)])
+        if res == -1:
+            guesses = [True]
+        else:
+            guesses = [True, False]
+
         new_situations = []
-        for situation in temp_resets:
-            temp = copy.deepcopy(situation)
-            temp_n = temp + [new_rtw_n]
-            temp_r = temp + [new_rtw_r]
-            new_situations.append(temp_r)
-            new_situations.append(temp_n)
+        for guess in guesses:
+            new_rtw = ResetTimedword(sigma[i], 0, guess)
+            for situation in temp_resets:
+                temp = copy.deepcopy(situation) + [new_rtw]
+                new_situations.append(temp)
         temp_resets = new_situations
+
     #return temp_resets
     OTAtables = []
     for situation in temp_resets:
@@ -340,27 +345,20 @@ def init_table_normal(sigma, ota):
         temp_tables = []
         for table in tables:
             new_tw = Timedword(sigma[i], 0)
-            for tran in ota.trans:
-                if tran.source == ota.initstate_name and tran.is_pass(new_tw):
-                    new_rtw_n = ResetTimedword(new_tw.action, new_tw.time, False)
-                    new_rtw_r = ResetTimedword(new_tw.action, new_tw.time, True)
-                    new_value = []
-                    if tran.target in ota.accept_names:
-                        new_value = [1]
-                    elif tran.target == ota.sink_name:
-                        new_value = [-1]
-                        #new_value = [0]
-                    else:
-                        new_value = [0]
-                    new_element_n = Element([new_rtw_n], new_value)
-                    new_element_r = Element([new_rtw_r], new_value)
-                    temp_R_n = table.R + [new_element_n]
-                    temp_R_r = table.R + [new_element_r]
-                    new_table_n = OTATable(S, temp_R_n, E, parent=-1, reason="init")
-                    new_table_r = OTATable(S, temp_R_r, E, parent=-1, reason="init")
-                    temp_tables.append(new_table_n)
-                    temp_tables.append(new_table_r)
-                    break
+            res = ota.is_accepted_delay([new_tw])
+            if res == -1:
+                # Now at sink
+                guesses = [True]
+            else:
+                guesses = [True, False]
+
+            for guess in guesses:
+                new_rtw = ResetTimedword(new_tw.action, new_tw.time, guess)
+                new_element = Element([new_rtw], [res])
+                temp_R = table.R + [new_element]
+                new_table = OTATable(S, temp_R, E, parent=-1, reason="init")
+                temp_tables.append(new_table)
+
         tables = temp_tables
     return tables
 
@@ -425,19 +423,28 @@ def guess_resets_in_newsuffix(table):
         temp_suffixes_resets.append(suffixes_resets)
     return temp_suffixes_resets
 
-def guess_ctx_reset(dtws):
-    """When receiving a counterexample (delay timed word), guess all resets and return all reset delay timed words as ctx candidates.  
+def guess_ctx_reset(dtws, ota):
+    """When receiving a counterexample (delay timed word), guess all
+    resets and return all reset delay timed words as ctx candidates.  
+    
     """
     #ctxs = []
+    res = ota.is_accepted_delay(dtws)  # Whether the counterexample leads to the sink
+
     new_tws = [Timedword(tw.action,tw.time) for tw in dtws]
-    ctxs = [[ResetTimedword(new_tws[0].action, new_tws[0].time, False)], [ResetTimedword(new_tws[0].action, new_tws[0].time, True)]]
+    ctxs = [[ResetTimedword(new_tws[0].action, new_tws[0].time, False)],
+            [ResetTimedword(new_tws[0].action, new_tws[0].time, True)]]
     for i in range(1, len(new_tws)):
         templist = []
         for rtws in ctxs:
-            temp_n = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, False)] 
-            temp_r = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, True)]
-            templist.append(temp_n)
-            templist.append(temp_r)
+            if res == -1 and i == len(new_tws)-1:
+                temp_r = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, True)]
+                templist.append(temp_r)
+            else:
+                temp_n = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, False)] 
+                temp_r = rtws + [ResetTimedword(new_tws[i].action, new_tws[i].time, True)]
+                templist.append(temp_n)
+                templist.append(temp_r)
         #ctxs = copy.deepcopy(templist)
         ctxs = templist
     return ctxs
@@ -515,13 +522,16 @@ def fill(element, E, ota):
     return True
 
 def add_ctx_normal(dtws, table, ota):
-    """Given a counterexample ctx, guess the reset, check the reset, for each suitable one, add it and its prefixes to R (except those already present in S and R)
+    """Given a counterexample ctx, guess the reset, check the reset,
+    for each suitable one, add it and its prefixes to R (except those
+    already present in S and R).
+
     """
     #print(ctx)
     #print(fix_resets(ctx,ota))
     #local_tws = dRTWs_to_lRTWs(fix_resets(ctx,ota))
     OTAtables = []
-    ctxs = guess_ctx_reset(dtws)
+    ctxs = guess_ctx_reset(dtws, ota)
     for ctx in ctxs:
         local_tws = dRTWs_to_lRTWs(ctx)
         normalize(local_tws)

@@ -21,16 +21,17 @@ class LearnOTATest(unittest.TestCase):
         pass
 
     def testB(self):
-        learn_ota(os.getcwd() + '\\a.json', debug_flag=False)
+        learn_ota(os.getcwd() + '\\example3.json', debug_flag=False)
 
-# Result for a.json
-# Total number of tables explored: 12160
-# Total number of tables to explore: 15360
-# Total time of learning: 903.7681005001068
+# example3.json
+# Total number of tables explored: 724
+# Total number of tables to explore: 2752
+# Total time of learning: 48.465362548828125
 
-# Total number of tables explored: 20608
-# Total number of tables to explore: 15360
-# Total time of learning: 364.96612524986267
+# Total number of tables explored: 384
+# Total number of tables to explore: 372
+# Total time of learning: 7.688438653945923
+
 
 if __name__ == "__main__":
     unittest.main()
