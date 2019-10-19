@@ -105,14 +105,25 @@ def learn_ota(paras, debug_flag):
 
     end_learning = time.time()
     if target is None:
+        print("---------------------------------------------------")
         print("Error! Learning Failed.")
         print("*******************Failed.***********************")
         return False
     else:
-        print("Succeed! The learned OTA is as follows.")
         print("---------------------------------------------------")
+        print("Succeed! The learned OTA is as follows.")
+        print("-------------Final table instance------------------")
         current_table.show()
+        print("---------------Learned OTA-------------------------")
         target.show()
+        print("---------------------------------------------------")
+        print("Removing the sink location...")
+        print()
+        print("The learned One-clock Timed Automtaton: ")
+        print()
+        target_without_sink = remove_sinklocation(target)
+        end_removesink = time.time()
+        target_without_sink.show()
         print("---------------------------------------------------")
         print("Total number of tables explored: " + str(t_number))
         print("Total number of tables to explore: " + str(need_to_explore.qsize()))
