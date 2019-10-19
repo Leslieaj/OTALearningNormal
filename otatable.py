@@ -215,7 +215,6 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
                 new_situations.append(temp)
         temp_resets = new_situations
 
-    #return temp_resets
     OTAtables = []
     for situation in temp_resets:
         new_rs = []
@@ -226,7 +225,7 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
         temp_R = [r for r in new_R] + new_rs
         temp_table = OTATable(new_S, temp_R, new_E, parent=table.id, reason="makeclosed")
         OTAtables.append(temp_table)
-    #return OTAtables
+
     #guess the resets of suffixes for each prefix and fill
     OTAtables_after_guessing_resets = []
     for otatable in OTAtables:
@@ -251,9 +250,7 @@ def make_closed(new_S, new_R, move, table, sigma, ota):
                     if True == fill(new_table.R[i],new_table.E,ota):
                         new_tables.append(new_table)
             temp_otatables = [tb for tb in new_tables]
-            #print("a", len(temp_otatables))
         OTAtables_after_guessing_resets = OTAtables_after_guessing_resets + temp_otatables
-        #print("b", len(OTAtables_after_guessing_resets))
     return OTAtables_after_guessing_resets
 
 def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset_i, reset_j, table, sigma, ota):

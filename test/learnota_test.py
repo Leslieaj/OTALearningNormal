@@ -5,7 +5,7 @@ import cProfile
 import unittest
 import sys, os
 sys.path.append('../')
-from learnota import learn_ota
+from learnota import learn_ota, learn_ota_idfs
 
 class LearnOTATest(unittest.TestCase):
     def setUp(self):
@@ -21,7 +21,7 @@ class LearnOTATest(unittest.TestCase):
         pass
 
     def testB(self):
-        learn_ota(os.getcwd() + '/../experiments/4_4_20/4_4_20-1.json', debug_flag=False)
+        learn_ota(os.getcwd() + '/../experiments/4_4_20/4_4_20-3.json', debug_flag=False)
 
 # example6.json
 # Total number of tables explored: 1550

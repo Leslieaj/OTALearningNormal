@@ -20,10 +20,7 @@ def learn_ota(paras, debug_flag):
     A = buildOTA(paras, 's')
     AA = buildAssistantOTA(A, 's')
     max_time_value = A.max_time_value()
-    #print("--------------all regions---------------------")
-    #regions = get_regions(max_time_value)
-    # for r in regions:
-    #     print(r.show())
+
     print("**************Start to learn ...*******************")
     print("---------------initial table-------------------")
     sigma = AA.sigma
@@ -38,7 +35,6 @@ def learn_ota(paras, debug_flag):
     # Current number of tables
     t_number = 0
     start = time.time()
-    equivalent = False
     eq_total_time = 0
     eq_number = 0
     target = None
@@ -129,6 +125,113 @@ def learn_ota(paras, debug_flag):
         print("Total number of tables to explore: " + str(need_to_explore.qsize()))
         print("Total time of learning: " + str(end_learning-start))
         return True
+
+def learn_ota_dfs(paras, depth, prev_ctx, debug_flag):
+    A = buildOTA(paras, 's')
+    AA = buildAssistantOTA(A, 's')
+    max_time_value = A.max_time_value()
+
+    sigma = AA.sigma
+
+    # Current number of tables
+    target = None
+    t_number = 0
+
+    def rec(current_table):
+        """If solution is found, return target. Else, return None."""
+        nonlocal t_number
+        t_number += 1
+        cur_depth = current_table.effective_len()
+        if t_number % 10 == 0:
+            print(t_number, cur_depth)
+
+        if cur_depth > depth:
+            return None
+
+        # First check if the table is closed
+        flag_closed, new_S, new_R, move = current_table.is_closed()
+        if not flag_closed:
+            temp_tables = make_closed(new_S, new_R, move, current_table, sigma, AA)
+            for table in temp_tables:
+                target = rec(table)
+                if target is not None:
+                    return target
+            return None
+
+        # If is closed, check if the table is consistent
+        flag_consistent, new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j = current_table.is_consistent()
+        if not flag_consistent:
+            temp_tables = make_consistent(new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j, current_table, sigma, AA)
+            for table in temp_tables:
+                target = rec(table)
+                if target is not None:
+                    return target
+            return None
+        
+        # If prepared, check conversion to FA
+        fa_flag, fa, sink_name = to_fa(current_table, t_number)
+        if not fa_flag:
+            return None
+
+        # Can convert to FA: convert to OTA and test equivalence
+        h = fa_to_ota(fa, sink_name, sigma, t_number)
+        equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
+        # Add counterexample to prev list
+        if not equivalent and ctx not in prev_ctx:
+            prev_ctx.append(ctx)
+        if not equivalent:
+            temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
+            for table in temp_tables:
+                target = rec(table)
+                if target is not None:
+                    return target
+            return None
+        else:
+            target = copy.deepcopy(h)
+            return target
+
+
+    tables = init_table_normal(sigma, AA)
+    for table in tables:
+        target = rec(table)
+        if target is not None:
+            return target, t_number
+
+    return None, t_number
+
+def learn_ota_idfs(paras, debug_flag):
+    start = time.time()
+    prev_ctx = []
+    for depth in range(1, 40):
+        target, t_number = learn_ota_dfs(paras, depth, prev_ctx, debug_flag)
+        print("Depth:", str(depth), "Total number of tables explored:", str(t_number))
+        if target is not None:
+            break
+
+    end_learning = time.time()
+    if target is None:
+        print("---------------------------------------------------")
+        print("Error! Learning Failed.")
+        print("*******************Failed.***********************")
+        return False
+    else:
+        print("---------------------------------------------------")
+        print("Succeed! The learned OTA is as follows.")
+        print("-------------Final table instance------------------")
+        # current_table.show()
+        print("---------------Learned OTA-------------------------")
+        # target.show()
+        print("---------------------------------------------------")
+        print("Removing the sink location...")
+        print()
+        print("The learned One-clock Timed Automtaton: ")
+        print()
+        target_without_sink = remove_sinklocation(target)
+        target_without_sink.show()
+        print("---------------------------------------------------")
+        print("Total time of learning: " + str(end_learning-start))
+        return True
+
 
 def main():
     learn_ota(sys.argv[1], debug_flag=False)
