@@ -21,6 +21,7 @@ class LearnOTATest(unittest.TestCase):
         pass
 
     def testB(self):
+        # learn_ota(os.getcwd() + '/example3.json', debug_flag=False)
         learn_ota(os.getcwd() + '/../experiments/4_4_20/4_4_20-3.json', debug_flag=False)
 
 # example6.json

@@ -134,6 +134,10 @@ class OTA(object):
         self.initstate_name = init
         self.accept_names = accepts or []
         self.sink_name = ""
+
+        self.membership_query = dict()
+        self.mem_query_num = 0
+        self.equiv_query_num = 0
     
     def max_time_value(self):
         """
@@ -226,25 +230,23 @@ class OTA(object):
             return True, current_statename
 
     def is_accepted_delay(self, tws):
+        self.mem_query_num += 1
+        tws = tuple(tws)
+        if tws in self.membership_query:
+            return self.membership_query[tws]
+
         flag, current_statename = self.run_delaytimedwords(tws)
         if flag == False:
-            return -2
-        if current_statename == self.sink_name:
-            return -1
-            #return 0
+            res = -2
+        elif current_statename == self.sink_name:
+            res = -1
         elif current_statename in self.accept_names:
-            return 1
+            res = 1
         else:
-            return 0
-
-    def is_accepted_reset(self, tws):
-        current_statename = self.run_resettimedwords(tws)
-        if current_statename == self.sink_name:
-            return -1
-        elif current_statename in self.accept_names:
-            return 1
-        else:
-            return 0
+            res = 0
+        
+        self.membership_query[tws] = res
+        return res
 
     def run_resettimedwords(self,tws):
         """Run a resettimedwords, return the final location.
@@ -307,6 +309,9 @@ class Timedword(object):
             return True
         else:
             return False
+
+    def __hash__(self):
+        return hash((self.action, self.time))
 
     def show(self):
         return '(' + self.action + ',' + str(self.time) + ')'

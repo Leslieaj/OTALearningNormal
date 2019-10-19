@@ -57,7 +57,6 @@ def learn_ota(paras, debug_flag):
                 print("------------------make closed--------------------------")
             temp_tables = make_closed(new_S, new_R, move, current_table, sigma, AA)
             if len(temp_tables) > 0:
-                depth += math.ceil(math.log(len(temp_tables), 2))
                 for table in temp_tables:
                     need_to_explore.put((table.effective_len(), table))
             continue
@@ -69,7 +68,6 @@ def learn_ota(paras, debug_flag):
                 print("------------------make consistent--------------------------")
             temp_tables = make_consistent(new_a, new_e_index, reset_index_i, reset_index_j, reset_i, reset_j, current_table, sigma, AA)
             if len(temp_tables) > 0:
-                depth += math.ceil(math.log(len(temp_tables), 2))
                 for table in temp_tables:
                     need_to_explore.put((table.effective_len(), table))
             continue
@@ -82,6 +80,7 @@ def learn_ota(paras, debug_flag):
         # Can convert to FA: convert to OTA and test equivalence
         h = fa_to_ota(fa, sink_name, sigma, t_number)
         eq_start = time.time()
+        AA.equiv_query_num += 1
         equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
         # Add counterexample to prev list
         if not equivalent and ctx not in prev_ctx:
@@ -92,7 +91,6 @@ def learn_ota(paras, debug_flag):
         if not equivalent:
             temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
             if len(temp_tables) > 0:
-                depth += math.ceil(math.log(len(temp_tables), 2))
                 for table in temp_tables:
                     need_to_explore.put((table.effective_len(), table))
         else:
@@ -121,6 +119,10 @@ def learn_ota(paras, debug_flag):
         end_removesink = time.time()
         target_without_sink.show()
         print("---------------------------------------------------")
+        print("Total number of membership query: " + str(len(AA.membership_query)))
+        print("Total number of membership query (no-cache): " + str(AA.mem_query_num))
+        print("Total number of equivalence query: " + str(len(prev_ctx) + 1))
+        print("Total number of equivalence query (no-cache): " + str(AA.equiv_query_num))
         print("Total number of tables explored: " + str(t_number))
         print("Total number of tables to explore: " + str(need_to_explore.qsize()))
         print("Total time of learning: " + str(end_learning-start))
