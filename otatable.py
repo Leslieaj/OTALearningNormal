@@ -266,7 +266,7 @@ def make_consistent(new_a, new_e_index, fix_reset_i, fix_reset_j, reset_i, reset
         new_e.extend(e)
     new_E.append(new_e)
     new_table = OTATable(table.S, table.R, new_E, parent=table.id, reason="makeconsistent")
-    temp_suffixes_resets = guess_resets_in_newsuffix(new_table)
+    temp_suffixes_resets = guess_resets_in_newsuffix(new_table, fix_reset_i, fix_reset_j, reset_i, reset_j, ota)
     OTAtables = []
     for situation in temp_suffixes_resets:
         temp_situation = []
@@ -367,13 +367,57 @@ def guess_resets_in_suffixes(table, to_guess=True):
         temp_suffixes_resets.append(suffixes_resets)
     return temp_suffixes_resets
 
-def guess_resets_in_newsuffix(table):
+def guess_resets_in_newsuffix(table, fix_reset_i, fix_reset_j, reset_i, reset_j, ota):
     """When making consistent, guess the resets in the new suffix.
     """
     temp_suffixes_resets = []
-    new_e_length = len(table.E[-1])
+    new_e = table.E[-1]
+    new_e_length = len(new_e)
     S_U_R_length = len(table.S) + len(table.R)
     length = S_U_R_length * new_e_length
+
+    guesses = []
+    if new_e_length == 1:
+        pass
+    elif new_e_length == 2:
+        for i in range(S_U_R_length):
+            if i < len(table.S):
+                to_sink = table.S[i].value[0]
+            else:
+                to_sink = table.R[i - len(table.S)].value[0]
+
+            if i == fix_reset_i:
+                guesses.append([reset_i])
+            elif i == fix_reset_j:
+                guesses.append([reset_j])
+            elif to_sink == -1:
+                guesses.append([True])
+            else:
+                if i < len(table.S):
+                    prefix = table.S[i].tws
+                else:
+                    prefix = table.R[i - len(table.S)].tws
+                
+                ltwR = prefix + [ResetTimedword(new_e[0].action, new_e[0].time, True),
+                                 ResetTimedword(new_e[1].action, new_e[1].time, None)]
+                ltwN = prefix + [ResetTimedword(new_e[0].action, new_e[0].time, False),
+                                 ResetTimedword(new_e[1].action, new_e[1].time, None)]
+                dtwR = lRTWs_to_DTWs(ltwR)
+                dtwN = lRTWs_to_DTWs(ltwN)
+                res_R = ota.is_accepted_delay(dtwR)
+                res_N = ota.is_accepted_delay(dtwN)
+                if res_R == -2:
+                    guesses.append([False])
+                elif res_N == -2:
+                    guesses.append([True])
+                elif res_R == res_N:
+                    guesses.append([True])
+                else:
+                    guesses.append([True, False])
+    else:
+        for i in range(S_U_R_length):
+            guesses.append([True, False])
+
     temp_resets = [[]]
     for i in range(0, length):
         temp = []
@@ -384,11 +428,10 @@ def guess_resets_in_newsuffix(table):
                 to_sink = table.R[i // new_e_length - len(table.S)].value[0]
             if i % new_e_length == new_e_length - 1:
                 temp.append(resets_situation + [None])
-            elif to_sink == -1:
-                temp.append(resets_situation + [True])
             else:
-                temp.append(resets_situation + [True])
-                temp.append(resets_situation + [False])
+                guess = guesses[i // new_e_length]
+                for g in guess:
+                    temp.append(resets_situation + [g])
         temp_resets = temp
     for resets_situation in temp_resets:
         index = 0
