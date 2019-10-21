@@ -62,10 +62,23 @@ python3 learnota.py experiments/example.json
 
 - We do not print the current table in this case since there are so many explored table instances during the learning process.
 
-- If we learn the target DOTA successfully, then the finial table instance, the learnt COTA, and the corresponding DOTA will be printed on the terminal. Additionally, the number of membership query (with and without cache), the number of equivalence query (with and without cache), the number of the explored table, the number of the table to be explored, and the learning time will also be given. 
+- If we learn the target DOTA successfully, then the **finial table instance**, the **learnt COTA**, and the **corresponding DOTA** will be printed on the terminal. Additionally, the number of **membership queries (with and without cache)**, the number of **equivalence queryies(with and without cache)**, the number of the **explored table instances**, the number of the **table instances to be explored**, and the **learning time** will also be given. 
 
-- In the result file of each group of the randomly generated DOTAs, we records our experiment results. Each line records the results of one DOTA in the group. The meanings of the numbers in a line are learning time, location number, number of membership queries with cache, number of membership queries without cache, number of equivalence queries with cache, number of equivalence without cache, number of explored table instances, number of table instances to explore.
+- In the result file of each group of the randomly generated DOTAs, we records our experiment results. Each line records the results of one DOTA in the group. The meanings of the numbers in a line are the **learning time**, the **location number**, the number of **membership queries with cache**, the number of **membership queries without cache**, the number of **equivalence queries with cache**, the number of **equivalence without cache**, the number of **explored table instances**, the number of **table instances to explore**, the number of **effective rows**. For example, the result for group `3_2_10` is represented in the following table.
 
-  |learning time|location number|mem_q (cahce)|mem_q(no-cache)|eq_q(cache)|eq_q(no-cache)|explored|to explore|effective row|
+  | learning time       | location number | mem_q (cahce) | mem_q(no-cache) | eq_q(cache) | eq_q(no-cache) | explored | to explore | effective row |
+  | ------------------- | --------------- | ------------- | --------------- | ----------- | -------------- | -------- | ---------- | ------------- |
+  | 1.4397876262664795  | 3               | 120           | 3437            | 12          | 108            | 257      | 97         | 9             |
+  | 0.395519495010376   | 3               | 43            | 551             | 7           | 20             | 47       | 18         | 6             |
+  | 3.6728410720825195  | 3               | 167           | 7575            | 14          | 173            | 562      | 200        | 15            |
+  | 0.32153940200805664 | 3               | 70            | 1636            | 7           | 59             | 163      | 11         | 10            |
+  | 0.21793413162231445 | 3               | 50            | 580             | 5           | 19             | 60       | 18         | 5             |
+  | 0.5875141620635986  | 3               | 95            | 1098            | 10          | 65             | 94       | 6          | 9             |
+  | 0.8570766448974609  | 3               | 85            | 1835            | 11          | 98             | 119      | 162        | 8             |
+  | 0.5399534702301025  | 3               | 47            | 664             | 8           | 26             | 61       | 19         | 6             |
+  | 0.498793363571167   | 3               | 60            | 613             | 7           | 31             | 58       | 15         | 6             |
+  | 0.3032650947570801  | 3               | 100           | 717             | 7           | 14             | 70       | 3          | 14            |
+  
+  
   
    
