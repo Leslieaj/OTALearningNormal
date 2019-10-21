@@ -335,6 +335,9 @@ class ResetTimedword(Timedword):
             return 'R'
         else:
             return 'N'
+    
+    def __hash__(self):
+        return hash((self.action, self.time, self.reset))
 
     def show(self):
         return '(' + self.action + ',' + str(self.time) + ',' + self.resetflag() + ')'

@@ -9,59 +9,53 @@ from equivalence import equivalence_query_normal, guess_ctx_reset
 
 class EquivalenceTest(unittest.TestCase):
     def test_init_table_normal(self):
-        A, _ = buildOTA('example6.json', 's')
+        A = buildOTA('example6.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         #max_time_value = AA.max_time_value()
         sigma = AA.sigma
 
         tables = init_table_normal(sigma, AA)
-        self.assertEqual(len(tables), 8)
+        self.assertEqual(len(tables), 1)
         # for table, i in zip(tables, range(1, len(tables)+1)):
         #     print("------------"+ str(i)+"-----------------------")
         #     table.show()
     
     def test_is_closed(self):
-        A, _ = buildOTA('example6.json', 's')
+        A = buildOTA('example6.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         #max_time_value = AA.max_time_value()
         sigma = AA.sigma
 
         T1_tables = init_table_normal(sigma, AA)
-        self.assertEqual(len(T1_tables), 8)
+        self.assertEqual(len(T1_tables), 1)
         #print("--------------------------------------------------")
         flag_closed, new_S, new_R, move = T1_tables[0].is_closed()
         self.assertEqual(flag_closed, False)
-        self.assertEqual(new_S, [Element([],[0],[]), Element([ResetTimedword('a',0,False)],[-1],[])])
-        self.assertEqual(new_R, [Element([ResetTimedword('b',0,False)],[-1],[]), Element([ResetTimedword('c',0,False)],[-1],[])])
-        self.assertEqual(move, Element([ResetTimedword('a',0,False)],[-1],[]))
-
-        flag_closed, new_S, new_R, move = T1_tables[5].is_closed()
-        self.assertEqual(flag_closed, False)
         self.assertEqual(new_S, [Element([],[0],[]), Element([ResetTimedword('a',0,True)],[-1],[])])
-        self.assertEqual(new_R, [Element([ResetTimedword('b',0,False)],[-1],[]), Element([ResetTimedword('c',0,True)],[-1],[])])
+        self.assertEqual(new_R, [Element([ResetTimedword('b',0,True)],[-1],[]), Element([ResetTimedword('c',0,True)],[-1],[])])
         self.assertEqual(move, Element([ResetTimedword('a',0,True)],[-1],[]))
 
     def test_make_closed(self):
-        A, _ = buildOTA('f.json', 's')
+        A = buildOTA('f.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         #max_time_value = AA.max_time_value()
         sigma = AA.sigma
 
         T1_tables = init_table_normal(sigma, AA)
-        self.assertEqual(len(T1_tables), 8)
+        self.assertEqual(len(T1_tables), 2)
         #print("--------------------------------------------------")
         flag_closed, new_S, new_R, move = T1_tables[0].is_closed()
         self.assertEqual(flag_closed, False)
         tables = make_closed(new_S, new_R, move, T1_tables[0], sigma, AA)
         print("--------------make closed---------------------")
-        self.assertEqual(len(tables),8)
+        self.assertEqual(len(tables),2)
         # print(len(tables))
         # for table in tables:
         #     table.show()
         #     print("--------------------------")
     
     def test_is_consistent(self):
-        A, _ = buildOTA('example2.json', 's')
+        A = buildOTA('example2.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         max_time_value = AA.max_time_value()
         sigma = AA.sigma
@@ -98,7 +92,7 @@ class EquivalenceTest(unittest.TestCase):
         #print(flag, new_a, new_e_index, i, j, reset)
 
     def test_make_consistent(self):
-        A, _ = buildOTA('example2.json', 's')
+        A = buildOTA('example2.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         max_time_value = AA.max_time_value()
         sigma = AA.sigma
@@ -126,8 +120,8 @@ class EquivalenceTest(unittest.TestCase):
         tables = make_consistent(new_a, new_e_index, i, j, reset_i, reset_j, T5, sigma, AA)
         for tb in tables:
             S_U_R = [s for s in tb.S] + [r for r in tb.R]
-            self.assertEqual(S_U_R[i].suffixes_resets[-1], [reset_i])
-            self.assertEqual(S_U_R[j].suffixes_resets[-1], [reset_j])
+            self.assertEqual(S_U_R[i].suffixes_resets[-1], [None])
+            self.assertEqual(S_U_R[j].suffixes_resets[-1], [None])
         # print(len(tables))
         # tables[0].show()
         # print("-----------")
@@ -138,7 +132,7 @@ class EquivalenceTest(unittest.TestCase):
         # tables[100].show()
 
     def test_guess_resets_in_suffixes(self):
-        A, _ = buildOTA('example6.json', 's')
+        A = buildOTA('example6.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         #max_time_value = AA.max_time_value()
         sigma = AA.sigma
@@ -148,13 +142,13 @@ class EquivalenceTest(unittest.TestCase):
         test_E = [[Timedword('a',2),Timedword('b',3),Timedword('a',1)],[Timedword('b',2),Timedword('a',4)],[Timedword('a',5)]]
         T1_table_0.E = test_E
         suffixes_resets = guess_resets_in_suffixes(T1_table_0)
-        self.assertEqual(len(suffixes_resets), 64)
-        self.assertEqual(len(suffixes_resets[22]), 3)
+        self.assertEqual(len(suffixes_resets), 8)
+        self.assertEqual(len(suffixes_resets[5]), 3)
         # for resets_situtation in suffixes_resets:
         #     print(resets_situtation)
 
     def test_guess_resets_in_newsuffix(self):
-        A, _ = buildOTA('example6.json', 's')
+        A = buildOTA('example6.json', 's')
         AA = buildAssistantOTA(A, 's')  # Assist
         #max_time_value = AA.max_time_value()
         sigma = AA.sigma
@@ -163,26 +157,26 @@ class EquivalenceTest(unittest.TestCase):
         T1_table_0 = T1_tables[0]
         test_E = [[Timedword('a',2),Timedword('b',3),Timedword('a',1)],[Timedword('b',2),Timedword('a',4)]]
         T1_table_0.E = test_E
-        suffixes_resets = guess_resets_in_newsuffix(T1_table_0)
-        self.assertEqual(len(suffixes_resets),256)
-        self.assertEqual(len(suffixes_resets[34]), 4)
-        self.assertEqual(suffixes_resets[1],[[True,True],[True,True],[True,True],[True,False]])
+        suffixes_resets = guess_resets_in_newsuffix(T1_table_0, 0, 0, True, True, AA)
+        self.assertEqual(len(suffixes_resets),1)
+        self.assertEqual(len(suffixes_resets[0]), 4)
+        self.assertEqual(suffixes_resets[0],[[True,None],[True,None],[True,None],[True,None]])
 
         test_E = [[Timedword('a',2),Timedword('b',3),Timedword('a',1)]]
         T1_table_0.E = test_E
-        suffixes_resets = guess_resets_in_newsuffix(T1_table_0)
-        self.assertEqual(len(suffixes_resets),4096)
+        suffixes_resets = guess_resets_in_newsuffix(T1_table_0, 0, 0, True, True, AA)
+        self.assertEqual(len(suffixes_resets),256)
         self.assertEqual(len(suffixes_resets[34]), 4)
-        self.assertEqual(suffixes_resets[1],[[True,True,True],[True,True,True],[True,True,True],[True,True,False]])
+        self.assertEqual(suffixes_resets[1],[[True,True,None],[True,True,None],[True,True,None],[True,False,None]])
 
     def test_add_ctx_normal(self):
         experiments_path = os.path.dirname(os.getcwd())+"/experiments/"
-        A, _ = buildOTA(experiments_path+'example3.json', 's')
+        A = buildOTA(experiments_path+'example3.json', 's')
         AA = buildAssistantOTA(A, 's')
         sigma = AA.sigma
         max_time_value = AA.max_time_value()
 
-        H, _ = buildOTA(experiments_path+'example3_1.json', 'q')
+        H = buildOTA(experiments_path+'example3_1.json', 'q')
         HH = buildAssistantOTA(H, 'q')
 
         # AA.show()
@@ -193,7 +187,7 @@ class EquivalenceTest(unittest.TestCase):
         flag, ctx = equivalence_query_normal(max_time_value,AA,HH)
         # print("-------------ctx-----------------")
         # print(ctx.tws)
-        ctxs = guess_ctx_reset(ctx.tws)
+        ctxs = guess_ctx_reset(ctx.tws,AA)
         # print(len(ctxs))
         # for rtws in ctxs:
         #     print(rtws)
@@ -233,13 +227,12 @@ class EquivalenceTest(unittest.TestCase):
         # T1_table_0.show()
         # print("----------------------------------------")
         tables = add_ctx_normal(ctx, T1_table_0, AA)
-        self.assertEqual(len(tables),2048)
+        self.assertEqual(len(tables),128)
         # print(len(tables))
         # tables[0].show()
         # tables[1].show()
         # tables[2].show()
         # tables[100].show()
-        #tables[4095].show()
 
 if __name__ == "__main__":
     unittest.main()
