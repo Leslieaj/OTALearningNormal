@@ -9,6 +9,8 @@ from ota import buildOTA, buildAssistantOTA
 from otatable import init_table_normal, add_ctx_normal, make_closed, make_consistent
 from hypothesis import to_fa, fa_to_ota, remove_sinklocation
 from equivalence import equivalence_query_normal
+from pac_equiv import pac_equivalence_query, sampleGeneration
+
 
 def find_insert_place(tb, tblist):
     for table, index in zip(tblist, range(0,len(tblist))):
@@ -40,6 +42,8 @@ def learn_ota(paras, debug_flag):
     target = None
 
     while True:
+        if need_to_explore.qsize() == 0:
+            break
         depth, current_table = need_to_explore.get()
         t_number = t_number + 1
 
@@ -81,7 +85,11 @@ def learn_ota(paras, debug_flag):
         h = fa_to_ota(fa, sink_name, sigma, t_number)
         eq_start = time.time()
         AA.equiv_query_num += 1
-        equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
+        
+        # equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
+        equivalent, ctx, ratio = pac_equivalence_query(max_time_value, AA, h, AA.equiv_query_num, 0.01, 0.01)
+        # print(ratio)
+
         # Add counterexample to prev list
         if not equivalent and ctx not in prev_ctx:
             prev_ctx.append(ctx)
@@ -126,7 +134,31 @@ def learn_ota(paras, debug_flag):
         print("Total number of tables explored: " + str(t_number))
         print("Total number of tables to explore: " + str(need_to_explore.qsize()))
         print("Total time of learning: " + str(end_learning-start))
-        return True
+        return target
+
+
+def validateResult(teacher, hypothesis):
+    inputs = teacher.sigma
+    max_time_value = teacher.max_time_value()
+    stateNum = len(teacher.locations)
+
+    equivalent, _ = equivalence_query_normal(max_time_value, teacher, hypothesis)
+    if equivalent:
+        print("Completely correct!")
+        return
+
+    correct = 0
+    for i in range(10000):
+        sample = sampleGeneration(inputs, max_time_value, stateNum)
+        realValue = teacher.is_accepted_delay(sample.tws)
+        value = hypothesis.is_accepted_delay(sample.tws)
+        if (realValue == 1 and value == 1) or (realValue != 1 and value != 1):
+            correct += 1
+
+    ratio = correct / 10000
+    print('Ratio correct: %.4f' % ratio)
+    return
+
 
 def learn_ota_dfs(paras, depth, prev_ctx, debug_flag):
     A = buildOTA(paras, 's')
@@ -236,7 +268,11 @@ def learn_ota_idfs(paras, debug_flag):
 
 
 def main():
-    learn_ota(sys.argv[1], debug_flag=False)
+    target = learn_ota(sys.argv[1], debug_flag=False)
+
+    # A = buildOTA(sys.argv[1], 's')
+    # AA = buildAssistantOTA(A, 's')
+    # validateResult(AA, target)
 
 
 if __name__=='__main__':
