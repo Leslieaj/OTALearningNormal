@@ -29,7 +29,7 @@ def pac_learn_ota(paras, debug_flag):
     target = None
     start = time.time()
 
-    def random_next_table(current_table):
+    def random_one_step(current_table):
         nonlocal t_number
         t_number += 1
 
@@ -83,26 +83,26 @@ def pac_learn_ota(paras, debug_flag):
             else:
                 return 'failed'
 
+    def random_steps(current_table, max_len):
+        while current_table.effective_len() < max_len:
+            res = random_one_step(current_table)
+            if res == 'failed':
+                return 'failed'
+            elif res == 'candidate':
+                return current_table
+            else:
+                current_table = res
+        return 'failed'
+
     init_tables = init_table_normal(sigma, AA)
     current_table = random.choice(init_tables)
 
     while True:
-        failed = False
-        while current_table.effective_len() < 15:
-            print(current_table.effective_len())
-            res = random_next_table(current_table)
-            if res == 'failed':
-                failed = True
-                break
-            elif res == 'candidate':
-                break
-            else:
-                current_table = res
+        current_table = random_steps(current_table, 15)
+        if current_table == 'failed':
+            return False
 
         if current_table.effective_len() >= 15:
-            break
-
-        if failed:
             return False
 
         print('ctx test:', current_table.effective_len())
