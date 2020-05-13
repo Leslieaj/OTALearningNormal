@@ -12,11 +12,11 @@ def pac_equivalence_query(upperGuard, teacher, hypothesis, eqNum, epsilon, delta
     # Number of tests in the current round.
     testNum = int((math.log(1 / delta) + math.log(2) * (eqNum + 1)) / epsilon)
 
-    correct = 0
     stateNum = len(teacher.locations)
     # print(testNum)
     for length in range(1, stateNum+1):
         ctx = None
+        correct = 0
         for i in range(testNum // stateNum):
             # Generate sample (delay-timed word) according to fixed distribution
             sample = sampleGeneration(hypothesis.sigma, upperGuard, stateNum, length=length)
@@ -29,14 +29,17 @@ def pac_equivalence_query(upperGuard, teacher, hypothesis, eqNum, epsilon, delta
 
             # assert realValue in (-1, 0, 1) and value in (-1, 0, 1)
             # Compare the results
-            if (realValue == 1 and value != 1) or (realValue != 1 and value == 1):
+            # if (realValue == 1 and value != 1) or (realValue != 1 and value == 1):
+            if (realValue != value):
                 if ctx is None or sample.tws < ctx.tws:
                     ctx = sample
+            else:
+                correct += 1
     
         if ctx is not None:
-            return False, ctx, correct / testNum
+            return False, ctx, length + correct / (testNum // stateNum)
 
-    return True, None, 1.0
+    return True, None, stateNum+1
 
 
 def sampleGeneration(inputs, upperGuard, stateNum, length=None):

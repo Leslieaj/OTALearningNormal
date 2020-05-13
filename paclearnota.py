@@ -28,7 +28,6 @@ def pac_learn_ota(paras, debug_flag):
 
     def random_one_step(current_table):
         nonlocal t_number
-        t_number += 1
 
         # First check if the table is closed
         flag_closed, new_S, new_R, move = current_table.is_closed()
@@ -53,6 +52,7 @@ def pac_learn_ota(paras, debug_flag):
                 return 'failed'
 
         # If prepared, check conversion to FA
+        t_number += 1
         fa_flag, fa, sink_name = to_fa(current_table, t_number)
         if not fa_flag:
             return 'failed'
@@ -80,6 +80,8 @@ def pac_learn_ota(paras, debug_flag):
                 return 'failed'
 
     def random_steps(current_table, max_len, cur_h, comparator=True):
+        nonlocal t_number
+
         while current_table.effective_len() < max_len:
             res = random_one_step(current_table)
             if res == 'failed':
@@ -89,9 +91,12 @@ def pac_learn_ota(paras, debug_flag):
                 if cur_h is None or not comparator:
                     return current_table
                 else:
+                    t_number += 1
                     fa_flag, fa, sink_name = to_fa(current_table, t_number)
+                    if not fa_flag:
+                        return 'failed'
                     h = fa_to_ota(fa, sink_name, sigma, t_number)
-                    equivalent, ctx = equivalence_query_normal(max_time_value, cur_h, h, prev_ctx)
+                    equivalent, ctx = equivalence_query_normal(max_time_value, cur_h, h, None)
                     assert not equivalent
                     realValue = AA.is_accepted_delay(ctx.tws)
                     value = h.is_accepted_delay(ctx.tws)
@@ -107,56 +112,122 @@ def pac_learn_ota(paras, debug_flag):
                 current_table = res
         return 'failed'
 
-    init_tables = init_table_normal(sigma, AA)
-    current_table = random.choice(init_tables)
+    def single_search():
+        nonlocal round_num
 
-    # Current hypothesis
-    cur_h = None
+        init_tables = init_table_normal(sigma, AA)
+        current_table = random.choice(init_tables)
 
-    while True:
-        round_num += 1
-        current_table = random_steps(current_table, 15, cur_h, comparator=False)
-        if current_table == 'failed':
-            return False
+        # Current hypothesis
+        cur_h = None
 
-        if current_table.effective_len() >= 15:
-            return False
+        while True:
+            round_num += 1
+            current_table = random_steps(current_table, 15, cur_h, comparator=False)
+            if current_table == 'failed':
+                return None
 
-        print('ctx test:', current_table.effective_len())
+            if current_table.effective_len() >= 15:
+                return None
 
-        # If prepared, check conversion to FA
-        fa_flag, fa, sink_name = to_fa(current_table, t_number)
-        if not fa_flag:
-            return False
+            print('ctx test:', current_table.effective_len())
 
-        # Can convert to FA: convert to OTA and test equivalence
-        cur_h = fa_to_ota(fa, sink_name, sigma, t_number)
+            # If prepared, check conversion to FA
+            fa_flag, fa, sink_name = to_fa(current_table, t_number)
+            if not fa_flag:
+                return None
 
-        # equivalent, ctx = equivalence_query_normal(max_time_value, AA, cur_h, prev_ctx)
-        equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, cur_h, round_num, 0.001, 0.001)
-        if ctx:
-            print(ctx.tws)
+            # Can convert to FA: convert to OTA and test equivalence
+            cur_h = fa_to_ota(fa, sink_name, sigma, t_number)
 
-        # Add counterexample to prev list
-        if not equivalent and ctx not in prev_ctx:
-            prev_ctx.append(ctx)
+            # equivalent, ctx = equivalence_query_normal(max_time_value, AA, cur_h, prev_ctx)
+            equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, cur_h, round_num, 0.001, 0.001)
+            if ctx:
+                print(ctx.tws)
 
-        if not equivalent:
-            temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
-            if len(temp_tables) > 0:
-                current_table = random.choice(temp_tables)
+            # Add counterexample to prev list
+            if not equivalent and ctx not in prev_ctx:
+                prev_ctx.append(ctx)
+
+            if not equivalent:
+                temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
+                if len(temp_tables) > 0:
+                    current_table = random.choice(temp_tables)
+                else:
+                    return None
             else:
-                return False
-        else:
-            target = copy.deepcopy(cur_h)
-            break
+                return current_table, cur_h
 
-    if target is None:
+
+    def parallel_search():
+        nonlocal round_num, t_number
+
+        init_tables = init_table_normal(sigma, AA)
+        width = 15
+        expand_factor = 2
+        tables = []
+        for i in range(width):
+            tables.append(random.choice(init_tables))
+
+        while round_num < 10:
+            round_num += 1
+            print(round_num)
+
+            new_tables = []
+            for i in range(min(len(tables), width)):
+                for j in range(expand_factor):
+                    if round_num == 1:
+                        current_table, cur_h = tables[i], None
+                    else:
+                        current_table, cur_h, ctx = tables[i]
+                        temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
+                        if len(temp_tables) > 0:
+                            current_table = random.choice(temp_tables)
+                        else:
+                            continue
+
+                    current_table = random_steps(current_table, 20, cur_h, comparator=False)
+                    if current_table == 'failed':
+                        continue
+
+                    if current_table.effective_len() >= 20:
+                        continue
+
+                    # If prepared, check conversion to FA
+                    t_number += 1
+                    fa_flag, fa, sink_name = to_fa(current_table, t_number)
+                    if not fa_flag:
+                        continue
+
+                    # Can convert to FA: convert to OTA and test equivalence
+                    cur_h = fa_to_ota(fa, sink_name, sigma, t_number)
+
+                    equivalent, ctx, sc = pac_equivalence_query(max_time_value, AA, cur_h, round_num, 0.001, 0.001)
+
+                    if not equivalent:
+                        new_tables.append((sc, current_table, copy.deepcopy(cur_h), ctx))
+                    else:
+                        return current_table, cur_h
+
+            new_tables = sorted(new_tables, reverse=True)
+            tables = []
+            for sc, table, cur_h, ctx in new_tables:
+                print(sc, table.effective_len())
+                tables.append((table, cur_h, ctx))
+                if len(tables) >= width:
+                    break
+
+        return None
+
+    res = parallel_search()
+
+    if res is None:
         print("---------------------------------------------------")
         print("Error! Learning Failed.")
         print("*******************Failed.***********************")
         return False
     else:
+        current_table, target = res
         print("---------------------------------------------------")
         print("Succeed! The learned OTA is as follows.")
         print("-------------Final table instance------------------")
@@ -169,7 +240,6 @@ def pac_learn_ota(paras, debug_flag):
         print("The learned One-clock Timed Automtaton: ")
         print()
         target_without_sink = remove_sinklocation(target)
-        end_removesink = time.time()
         target_without_sink.show()
         print("---------------------------------------------------")
         print("Total number of membership query: " + str(len(AA.membership_query)))
