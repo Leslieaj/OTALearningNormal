@@ -13,35 +13,44 @@ def pac_equivalence_query(upperGuard, teacher, hypothesis, eqNum, epsilon, delta
     testNum = int((math.log(1 / delta) + math.log(2) * (eqNum + 1)) / epsilon)
 
     correct = 0
-    print(testNum)
-    for i in range(testNum):
-        # Generate sample (delay-timed word) according to fixed distribution
-        sample = sampleGeneration(hypothesis.sigma, upperGuard, len(teacher.locations))
-        
-        # Evaluation of sample on the teacher, should be -1, 0, 1
-        realValue = teacher.is_accepted_delay(sample.tws)
-        
-        # Evaluation of sample on the hypothesis, should be -1, 0, 1
-        value = hypothesis.is_accepted_delay(sample.tws)
+    stateNum = len(teacher.locations)
+    # print(testNum)
+    for length in range(1, stateNum+1):
+        ctx = None
+        for i in range(testNum // stateNum):
+            # Generate sample (delay-timed word) according to fixed distribution
+            sample = sampleGeneration(hypothesis.sigma, upperGuard, stateNum, length=length)
+            
+            # Evaluation of sample on the teacher, should be -1, 0, 1
+            realValue = teacher.is_accepted_delay(sample.tws)
+            
+            # Evaluation of sample on the hypothesis, should be -1, 0, 1
+            value = hypothesis.is_accepted_delay(sample.tws)
 
-        # Compare the results
-        if (realValue == 1 and value == -1) or (realValue != 1 and value == 1):
-            return False, sample, correct / testNum
+            # assert realValue in (-1, 0, 1) and value in (-1, 0, 1)
+            # Compare the results
+            if (realValue == 1 and value != 1) or (realValue != 1 and value == 1):
+                if ctx is None or sample.tws < ctx.tws:
+                    ctx = sample
+    
+        if ctx is not None:
+            return False, ctx, correct / testNum
 
     return True, None, 1.0
 
 
-def sampleGeneration(inputs, upperGuard, stateNum):
+def sampleGeneration(inputs, upperGuard, stateNum, length=None):
     """Generate a sample."""
     sample = []
-    length = math.ceil(random.gauss(1.4 * stateNum, 0.7 * stateNum))
-    while length < 0:
-        length = math.ceil(random.gauss(1.4 * stateNum, 0.7 * stateNum))
+    if length is None:
+        length = random.randint(1, stateNum)
     for i in range(length):
         input = inputs[random.randint(0, len(inputs) - 1)]
-        time = random.randint(0, upperGuard * 3) / 2
-        if time > upperGuard:
-            time = upperGuard
+        time = random.randint(0, upperGuard * 2 + 1)
+        if time % 2 == 0:
+            time = time // 2
+        else:
+            time = time // 2 + 0.1
         temp = Timedword(input, time)
         sample.append(temp)
     return Element(sample, [])

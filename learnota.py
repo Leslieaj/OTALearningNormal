@@ -84,10 +84,22 @@ def learn_ota(paras, debug_flag):
         # Can convert to FA: convert to OTA and test equivalence
         h = fa_to_ota(fa, sink_name, sigma, t_number)
         eq_start = time.time()
-        AA.equiv_query_num += 1
         
         # equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
-        equivalent, ctx, ratio = pac_equivalence_query(max_time_value, AA, h, AA.equiv_query_num, 0.01, 0.01)
+        equivalent, ctx = True, None
+        if prev_ctx is not None:
+            for ctx in prev_ctx:
+                teacher_res = AA.is_accepted_delay(ctx.tws)
+                hypothesis_res = h.is_accepted_delay(ctx.tws)
+                if teacher_res != hypothesis_res and hypothesis_res != -2:
+                    equivalent, ctx = False, ctx
+
+        if equivalent:
+            AA.equiv_query_num += 1
+            equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, h, AA.equiv_query_num, 0.001, 0.001)
+
+        if not equivalent:
+            print(ctx.tws)
         # print(ratio)
 
         # Add counterexample to prev list
@@ -134,7 +146,7 @@ def learn_ota(paras, debug_flag):
         print("Total number of tables explored: " + str(t_number))
         print("Total number of tables to explore: " + str(need_to_explore.qsize()))
         print("Total time of learning: " + str(end_learning-start))
-        return target
+        return target_without_sink  
 
 
 def validateResult(teacher, hypothesis):
@@ -270,9 +282,9 @@ def learn_ota_idfs(paras, debug_flag):
 def main():
     target = learn_ota(sys.argv[1], debug_flag=False)
 
-    # A = buildOTA(sys.argv[1], 's')
-    # AA = buildAssistantOTA(A, 's')
-    # validateResult(AA, target)
+    A = buildOTA(sys.argv[1], 's')
+    AA = buildAssistantOTA(A, 's')
+    validateResult(AA, target)
 
 
 if __name__=='__main__':
