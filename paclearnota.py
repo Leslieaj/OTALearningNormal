@@ -24,10 +24,7 @@ def pac_learn_ota(paras, debug_flag):
     prev_ctx = []
     round_num = 0
     t_number = 0
-    eq_total_time = 0.0
-    eq_number = 0
     target = None
-    start = time.time()
 
     def random_one_step(current_table):
         nonlocal t_number
@@ -62,7 +59,6 @@ def pac_learn_ota(paras, debug_flag):
 
         # Can convert to FA: convert to OTA and test equivalence
         h = fa_to_ota(fa, sink_name, sigma, t_number)
-        eq_start = time.time()
         
         equivalent, ctx = True, None
         if prev_ctx is not None:
@@ -83,13 +79,30 @@ def pac_learn_ota(paras, debug_flag):
             else:
                 return 'failed'
 
-    def random_steps(current_table, max_len):
+    def random_steps(current_table, max_len, cur_h, comparator=True):
         while current_table.effective_len() < max_len:
             res = random_one_step(current_table)
             if res == 'failed':
                 return 'failed'
             elif res == 'candidate':
-                return current_table
+                # Find shortest difference
+                if cur_h is None or not comparator:
+                    return current_table
+                else:
+                    fa_flag, fa, sink_name = to_fa(current_table, t_number)
+                    h = fa_to_ota(fa, sink_name, sigma, t_number)
+                    equivalent, ctx = equivalence_query_normal(max_time_value, cur_h, h, prev_ctx)
+                    assert not equivalent
+                    realValue = AA.is_accepted_delay(ctx.tws)
+                    value = h.is_accepted_delay(ctx.tws)
+                    if (realValue == 1 and value != 1) or (realValue != 1 and value == 1):
+                        temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
+                        if len(temp_tables) > 0:
+                            current_table = random.choice(temp_tables)
+                        else:
+                            return 'failed'
+                    else:
+                        return current_table
             else:
                 current_table = res
         return 'failed'
@@ -97,8 +110,12 @@ def pac_learn_ota(paras, debug_flag):
     init_tables = init_table_normal(sigma, AA)
     current_table = random.choice(init_tables)
 
+    # Current hypothesis
+    cur_h = None
+
     while True:
-        current_table = random_steps(current_table, 15)
+        round_num += 1
+        current_table = random_steps(current_table, 15, cur_h, comparator=False)
         if current_table == 'failed':
             return False
 
@@ -106,7 +123,6 @@ def pac_learn_ota(paras, debug_flag):
             return False
 
         print('ctx test:', current_table.effective_len())
-        round_num += 1
 
         # If prepared, check conversion to FA
         fa_flag, fa, sink_name = to_fa(current_table, t_number)
@@ -114,18 +130,17 @@ def pac_learn_ota(paras, debug_flag):
             return False
 
         # Can convert to FA: convert to OTA and test equivalence
-        h = fa_to_ota(fa, sink_name, sigma, t_number)
-        eq_start = time.time()
+        cur_h = fa_to_ota(fa, sink_name, sigma, t_number)
 
-        # equivalent, ctx = equivalence_query_normal(max_time_value, AA, h, prev_ctx)
-        equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, h, round_num, 0.001, 0.001)
+        # equivalent, ctx = equivalence_query_normal(max_time_value, AA, cur_h, prev_ctx)
+        equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, cur_h, round_num, 0.001, 0.001)
+        if ctx:
+            print(ctx.tws)
 
         # Add counterexample to prev list
         if not equivalent and ctx not in prev_ctx:
             prev_ctx.append(ctx)
-        eq_end = time.time()
-        eq_total_time = eq_total_time + eq_end - eq_start
-        eq_number = eq_number + 1
+
         if not equivalent:
             temp_tables = add_ctx_normal(ctx.tws, current_table, AA)
             if len(temp_tables) > 0:
@@ -133,10 +148,9 @@ def pac_learn_ota(paras, debug_flag):
             else:
                 return False
         else:
-            target = copy.deepcopy(h)
+            target = copy.deepcopy(cur_h)
             break
 
-    end_learning = time.time()
     if target is None:
         print("---------------------------------------------------")
         print("Error! Learning Failed.")
@@ -164,7 +178,7 @@ def pac_learn_ota(paras, debug_flag):
         print("Total number of equivalence query (no-cache): " + str(AA.equiv_query_num))
         print("Total number of tables explored: " + str(t_number))
         # print("Total number of tables to explore: " + str(need_to_explore.qsize()))
-        print("Total time of learning: " + str(end_learning-start))
+        # print("Total time of learning: " + str(end_learning-start))
         return target_without_sink  
 
 
