@@ -27,6 +27,13 @@ def pac_learn_ota(paras, debug_flag):
     target = None
 
     def random_one_step(current_table):
+        """Find a random successor of the current table.
+
+        Here a successor is defined to be the table after executing
+        one make_closed, one make_consistent, or one add_ctx_normal
+        on existing counterexamples.
+
+        """
         nonlocal t_number
 
         # First check if the table is closed
@@ -80,6 +87,12 @@ def pac_learn_ota(paras, debug_flag):
                 return 'failed'
 
     def random_steps(current_table, max_len, cur_h, comparator=True):
+        """Execute random_one_step until reaching a candidate.
+
+        Here a candidate means a prepared table that agrees with teacher
+        on all existing counterexamples.
+
+        """
         nonlocal t_number
 
         while current_table.effective_len() < max_len:
@@ -113,6 +126,7 @@ def pac_learn_ota(paras, debug_flag):
         return 'failed'
 
     def single_search():
+        """Single path search: at each step, pick a random successor."""
         nonlocal round_num
 
         init_tables = init_table_normal(sigma, AA)
@@ -160,6 +174,14 @@ def pac_learn_ota(paras, debug_flag):
 
 
     def parallel_search():
+        """Parallel search.
+        
+        Maintain a list of current tables (of size width). At each iteration,
+        pick a number of random successors (of size expand_factor) to form
+        the new list of tables. Sort the new list and pick the best 'width'
+        tables for the next iteration.
+
+        """ 
         nonlocal round_num, t_number
 
         init_tables = init_table_normal(sigma, AA)
