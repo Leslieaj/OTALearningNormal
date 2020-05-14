@@ -155,7 +155,7 @@ def pac_learn_ota(paras, debug_flag):
             cur_h = fa_to_ota(fa, sink_name, sigma, t_number)
 
             # equivalent, ctx = equivalence_query_normal(max_time_value, AA, cur_h, prev_ctx)
-            equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, cur_h, round_num, 0.001, 0.001)
+            equivalent, ctx, _ = pac_equivalence_query(A, max_time_value, AA, cur_h, round_num, 0.001, 0.001)
             if ctx:
                 print(ctx.tws)
 
@@ -224,7 +224,7 @@ def pac_learn_ota(paras, debug_flag):
                     # Can convert to FA: convert to OTA and test equivalence
                     cur_h = fa_to_ota(fa, sink_name, sigma, t_number)
 
-                    equivalent, ctx, sc = pac_equivalence_query(max_time_value, AA, cur_h, round_num, 0.001, 0.001)
+                    equivalent, ctx, sc = pac_equivalence_query(A, max_time_value, AA, cur_h, round_num, 0.001, 0.001)
 
                     if not equivalent:
                         new_tables.append((sc, current_table, copy.deepcopy(cur_h), ctx))

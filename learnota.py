@@ -4,6 +4,7 @@ import time
 import math
 import copy
 import queue
+import random
 
 from ota import buildOTA, buildAssistantOTA
 from otatable import init_table_normal, add_ctx_normal, make_closed, make_consistent
@@ -96,10 +97,12 @@ def learn_ota(paras, debug_flag):
 
         if equivalent:
             AA.equiv_query_num += 1
-            equivalent, ctx, _ = pac_equivalence_query(max_time_value, AA, h, AA.equiv_query_num, 0.001, 0.001)
+            equivalent, ctx, _ = pac_equivalence_query(A, max_time_value, AA, h, AA.equiv_query_num, 0.001, 0.001)
 
         if not equivalent:
+            # remove_sinklocation(copy.deepcopy(h)).show()
             print(ctx.tws)
+
         # print(ratio)
 
         # Add counterexample to prev list
@@ -287,5 +290,6 @@ def main():
     validateResult(AA, target)
 
 
-if __name__=='__main__':
-	main()
+if __name__ == '__main__':
+    random.seed(1)
+    main()
