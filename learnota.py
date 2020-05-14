@@ -284,10 +284,10 @@ def learn_ota_idfs(paras, debug_flag):
 
 def main():
     target = learn_ota(sys.argv[1], debug_flag=False)
-
-    A = buildOTA(sys.argv[1], 's')
-    AA = buildAssistantOTA(A, 's')
-    validateResult(AA, target)
+    if target:
+        A = buildOTA(sys.argv[1], 's')
+        AA = buildAssistantOTA(A, 's')
+        validateResult(AA, target)
 
 
 if __name__ == '__main__':

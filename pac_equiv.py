@@ -1,5 +1,6 @@
 import random
 import math
+import copy
 
 from ota import Timedword
 from otatable import Element
@@ -7,6 +8,85 @@ import interval
 
 
 """Equivalence query under PAC."""
+
+def isCounterexample(teacher, hypothesis, sample):
+    """Compare evaluation of teacher and hypothesis on the given sample
+    (a delay-timed word).
+
+    """
+    # Evaluation of sample on the teacher, should be -1, 0, 1
+    realValue = teacher.is_accepted_delay(sample.tws)
+    
+    # Evaluation of sample on the hypothesis, should be -1, 0, 1
+    value = hypothesis.is_accepted_delay(sample.tws)
+
+    return (realValue == 1 and value != 1) or (realValue != 1 and value == 1)
+
+def minimizeCounterexample(teacher, hypothesis, sample):
+    """Minimize a given delay-timed word."""
+    reset = []
+    current_state = hypothesis.initstate_name
+    current_clock = 0
+    ltw = []
+
+    # Fix computation with 0.1
+    def round1(x):
+        return int(x * 10 + 0.5) / 10
+
+    def one_lower(x):
+        if round1(x - int(x)) == 0.1:
+            return int(x)
+        else:
+            return round1(x - 0.9)
+
+    # Find sequence of reset information
+    for tw in sample.tws:
+        current_clock = round1(current_clock + tw.time)
+        ltw.append(Timedword(tw.action, current_clock))
+        for tran in hypothesis.trans:
+            found = False
+            if current_state == tran.source and tran.is_pass(Timedword(tw.action, current_clock)):
+                reset.append(tran.reset)
+                current_state = tran.target
+                if tran.reset:
+                    current_clock = 0
+                found = True
+                break
+        assert found
+
+    # Initial logical-timed word
+    print('ltw:', ltw)
+
+    def ltw_to_dtw(ltw):
+        dtw = []
+        for i in range(len(ltw)):
+            if i == 0 or reset[i-1]:
+                dtw.append(Timedword(ltw[i].action, ltw[i].time))
+            else:
+                dtw.append(Timedword(ltw[i].action, round1(ltw[i].time - ltw[i-1].time)))
+        return Element(dtw, [])
+
+    print('initial:', ltw_to_dtw(ltw).tws)
+    for i in range(len(ltw)):
+        while True:
+            if i == 0 or reset[i-1]:
+                can_reduce = (ltw[i].time > 0)
+            else:
+                can_reduce = (ltw[i].time > ltw[i-1].time)
+            if not can_reduce:
+                break
+            ltw2 = copy.deepcopy(ltw)
+            ltw2[i] = Timedword(ltw[i].action, one_lower(ltw[i].time))
+            print('try', ltw_to_dtw(ltw2).tws)
+            if not isCounterexample(teacher, hypothesis, ltw_to_dtw(ltw2)):
+                break
+            print('change')
+            ltw = ltw2
+
+    print('final:', ltw_to_dtw(ltw).tws)
+    return ltw_to_dtw(ltw)
+    # for i in range(len(sample.tws)):
+
 
 def pac_equivalence_query(A, upperGuard, teacher, hypothesis, eqNum, epsilon, delta):
     """Equivalence query using random test cases."""
@@ -21,27 +101,18 @@ def pac_equivalence_query(A, upperGuard, teacher, hypothesis, eqNum, epsilon, de
         i = 0
         # print(length)
         while i < testNum // stateNum:
+            i += 1
             # Generate sample (delay-timed word) according to fixed distribution
             # sample = sampleGeneration(hypothesis.sigma, upperGuard, stateNum, length=length)
             sample = sampleGeneration2(A, upperGuard, length)
 
-            # Evaluation of sample on the teacher, should be -1, 0, 1
-            realValue = teacher.is_accepted_delay(sample.tws)
-            
-            # Evaluation of sample on the hypothesis, should be -1, 0, 1
-            value = hypothesis.is_accepted_delay(sample.tws)
-
-            # assert realValue in (-1, 0, 1) and value in (-1, 0, 1)
             # Compare the results
-            i += 1
-            if (realValue == 1 and value != 1) or (realValue != 1 and value == 1):
-            # if (realValue != value):
+            if isCounterexample(teacher, hypothesis, sample):
                 if ctx is None or sample.tws < ctx.tws:
                     ctx = sample
-            else:
-                correct += 1
     
         if ctx is not None:
+            ctx = minimizeCounterexample(teacher, hypothesis, ctx)
             return False, ctx, length + correct / (testNum // stateNum)
 
     return True, None, stateNum+1
@@ -121,7 +192,7 @@ def sampleGeneration_valid(teacher, upperGuard, length):
         path.append(edge)
         current_state = edge.target
 
-    # Next, figure out the minimum and maximum logical time.
+    # Next, figure out (double of) the minimum and maximum logical time.
     min_time, max_time = [], []
     for tran in path:
         assert len(tran.constraints) == 1
@@ -160,7 +231,7 @@ def sampleGeneration_valid(teacher, upperGuard, length):
         if path[i].reset:
             cur_time = 0
 
-    # Finally, obtain the resulting logical and delayed timed word.
+    # Finally, change doubled time to fractions.
     ltw = []
     for i in range(length):
         if double_times[i] % 2 == 0:
@@ -169,6 +240,7 @@ def sampleGeneration_valid(teacher, upperGuard, length):
             time = double_times[i] // 2 + 0.1
         ltw.append(Timedword(path[i].label, time))
 
+    # Convert logical-timed word to delayed-timed word.
     dtw = []
     for i in range(length):
         if i == 0 or path[i-1].reset:
