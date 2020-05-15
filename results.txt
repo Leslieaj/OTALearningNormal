@@ -1,0 +1,47 @@
+3-2-10  (9/10)
+1 - Correct
+2 - 1.0000
+3 - 1.0000
+4 - Correct
+5 - Correct
+6 - 0.9999
+7 - Out of memory
+8 - Correct
+9 - Correct
+10 - Correct
+
+4-2-10  (9/10)
+1 - Correct
+2 - Correct
+3 - Correct
+4 - 0.9998
+5 - 1.0000
+6 - Correct
+7 - Correct
+8 - Out of time
+9 - Correct
+10 - 1.0000
+
+5-2-10  (7/10)
+1 - Correct
+2 - Correct
+3 - Correct
+4 - Failed
+5 - Out of memory
+6 - Out of time
+7 - Correct
+8 - Correct
+9 - Correct
+10 - Correct
+
+6-2-10  (7/10)
+1 - Correct
+2 - Correct
+3 - 1.0000
+4 - 1.0000
+5 - Correct
+6 - 0.9998
+7 - Out of time
+8 - Out of time
+9 - Failed
+10 - Correct

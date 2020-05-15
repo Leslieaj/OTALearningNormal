@@ -54,8 +54,7 @@ def minimizeCounterexample(teacher, hypothesis, sample):
                 break
         assert found
 
-    # Initial logical-timed word
-    print('ltw:', ltw)
+    # print('ltw:', ltw)
 
     def ltw_to_dtw(ltw):
         dtw = []
@@ -66,7 +65,7 @@ def minimizeCounterexample(teacher, hypothesis, sample):
                 dtw.append(Timedword(ltw[i].action, round1(ltw[i].time - ltw[i-1].time)))
         return Element(dtw, [])
 
-    print('initial:', ltw_to_dtw(ltw).tws)
+    # print('initial:', ltw_to_dtw(ltw).tws)
     for i in range(len(ltw)):
         while True:
             if i == 0 or reset[i-1]:
@@ -77,15 +76,14 @@ def minimizeCounterexample(teacher, hypothesis, sample):
                 break
             ltw2 = copy.deepcopy(ltw)
             ltw2[i] = Timedword(ltw[i].action, one_lower(ltw[i].time))
-            print('try', ltw_to_dtw(ltw2).tws)
+            # print('try', ltw_to_dtw(ltw2).tws)
             if not isCounterexample(teacher, hypothesis, ltw_to_dtw(ltw2)):
                 break
-            print('change')
+            # print('change')
             ltw = ltw2
 
-    print('final:', ltw_to_dtw(ltw).tws)
+    # print('final:', ltw_to_dtw(ltw).tws)
     return ltw_to_dtw(ltw)
-    # for i in range(len(sample.tws)):
 
 
 def pac_equivalence_query(A, upperGuard, teacher, hypothesis, eqNum, epsilon, delta):

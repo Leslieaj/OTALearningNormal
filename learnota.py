@@ -10,7 +10,7 @@ from ota import buildOTA, buildAssistantOTA
 from otatable import init_table_normal, add_ctx_normal, make_closed, make_consistent
 from hypothesis import to_fa, fa_to_ota, remove_sinklocation
 from equivalence import equivalence_query_normal
-from pac_equiv import pac_equivalence_query, sampleGeneration
+from pac_equiv import pac_equivalence_query, sampleGeneration, minimizeCounterexample
 
 
 def find_insert_place(tb, tblist):
@@ -94,6 +94,7 @@ def learn_ota(paras, debug_flag):
                 hypothesis_res = h.is_accepted_delay(ctx.tws)
                 if teacher_res != hypothesis_res and hypothesis_res != -2:
                     equivalent, ctx = False, ctx
+                    ctx = minimizeCounterexample(AA, h, ctx)
 
         if equivalent:
             AA.equiv_query_num += 1
