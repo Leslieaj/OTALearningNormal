@@ -138,6 +138,7 @@ class OTA(object):
         self.membership_query = dict()
         self.mem_query_num = 0
         self.equiv_query_num = 0
+        self.test_query_num = 0
     
     def max_time_value(self):
         """
@@ -229,10 +230,12 @@ class OTA(object):
                     pass
             return True, current_statename
 
-    def is_accepted_delay(self, tws):
-        self.mem_query_num += 1
+    def is_accepted_delay(self, tws, is_mem=True):
+        if is_mem:
+            self.mem_query_num += 1
+        self.test_query_num += 1
         tws = tuple(tws)
-        if tws in self.membership_query:
+        if is_mem and tws in self.membership_query:
             return self.membership_query[tws]
 
         flag, current_statename = self.run_delaytimedwords(tws)
@@ -245,7 +248,8 @@ class OTA(object):
         else:
             res = 0
         
-        self.membership_query[tws] = res
+        if is_mem:
+            self.membership_query[tws] = res
         return res
 
     def run_resettimedwords(self,tws):

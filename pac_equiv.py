@@ -9,13 +9,13 @@ import interval
 
 """Equivalence query under PAC."""
 
-def isCounterexample(teacher, hypothesis, sample):
+def isCounterexample(teacher, hypothesis, sample, is_mem=True):
     """Compare evaluation of teacher and hypothesis on the given sample
     (a delay-timed word).
 
     """
     # Evaluation of sample on the teacher, should be -1, 0, 1
-    realValue = teacher.is_accepted_delay(sample.tws)
+    realValue = teacher.is_accepted_delay(sample.tws, is_mem=is_mem)
     
     # Evaluation of sample on the hypothesis, should be -1, 0, 1
     value = hypothesis.is_accepted_delay(sample.tws)
@@ -77,7 +77,7 @@ def minimizeCounterexample(teacher, hypothesis, sample):
             ltw2 = copy.deepcopy(ltw)
             ltw2[i] = Timedword(ltw[i].action, one_lower(ltw[i].time))
             # print('try', ltw_to_dtw(ltw2).tws)
-            if not isCounterexample(teacher, hypothesis, ltw_to_dtw(ltw2)):
+            if not isCounterexample(teacher, hypothesis, ltw_to_dtw(ltw2), is_mem=True):
                 break
             # print('change')
             ltw = ltw2
@@ -93,7 +93,7 @@ def pac_equivalence_query(A, upperGuard, teacher, hypothesis, eqNum, epsilon, de
 
     stateNum = len(teacher.locations)
     # print(testNum)
-    for length in range(1, stateNum+2):
+    for length in range(1, math.ceil(stateNum*1.5)):
         ctx = None
         correct = 0
         i = 0
@@ -105,7 +105,7 @@ def pac_equivalence_query(A, upperGuard, teacher, hypothesis, eqNum, epsilon, de
             sample = sampleGeneration2(A, upperGuard, length)
 
             # Compare the results
-            if isCounterexample(teacher, hypothesis, sample):
+            if isCounterexample(teacher, hypothesis, sample, is_mem=False):
                 if ctx is None or sample.tws < ctx.tws:
                     ctx = sample
     

@@ -143,12 +143,15 @@ def learn_ota(paras, debug_flag):
         end_removesink = time.time()
         target_without_sink.show()
         print("---------------------------------------------------")
+        print("Number of transitions in teacher: " + str(len(A.trans)))
         print("Total number of membership query: " + str(len(AA.membership_query)))
-        print("Total number of membership query (no-cache): " + str(AA.mem_query_num))
-        print("Total number of equivalence query: " + str(len(prev_ctx) + 1))
+        # print("Total number of membership query (no-cache): " + str(AA.mem_query_num))
+        # print("Total number of equivalence query: " + str(len(prev_ctx) + 1))
         print("Total number of equivalence query (no-cache): " + str(AA.equiv_query_num))
+        print("Total number of tests: " + str(AA.test_query_num))
         print("Total number of tables explored: " + str(t_number))
-        print("Total number of tables to explore: " + str(need_to_explore.qsize()))
+        # print("Total number of tables to explore: " + str(need_to_explore.qsize()))
+        print("Number of locations in learned table: " + str(len(target_without_sink.locations)))
         print("Total time of learning: " + str(end_learning-start))
         return target_without_sink  
 
@@ -164,14 +167,14 @@ def validateResult(teacher, hypothesis):
         return
 
     correct = 0
-    for i in range(10000):
+    for i in range(20000):
         sample = sampleGeneration(inputs, max_time_value, stateNum)
         realValue = teacher.is_accepted_delay(sample.tws)
         value = hypothesis.is_accepted_delay(sample.tws)
         if (realValue == 1 and value == 1) or (realValue != 1 and value != 1):
             correct += 1
 
-    ratio = correct / 10000
+    ratio = correct / 20000
     print('Ratio correct: %.4f' % ratio)
     return
 
@@ -292,5 +295,5 @@ def main():
 
 
 if __name__ == '__main__':
-    random.seed(1)
+    random.seed(3)
     main()
